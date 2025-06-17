@@ -1,0 +1,1020 @@
+```html
+    :root {
+        --primary: #4361ee;
+        --primary-dark: #3a56d4;
+        --secondary: #7209b7;
+        --light: #f8f9fa;
+        --dark: #212529;
+        --success: #38b000;
+        --warning: #ffb700;
+        --danger: #d90429;
+        --gray: #adb5bd;
+    }
+    
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+    
+    body {
+        font-family: 'Poppins', sans-serif;
+        background-color: #f0f4f8;
+        color: var(--dark);
+        line-height: 1.6;
+    }
+    
+    .container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 2rem;
+    }
+    
+    header {
+        text-align: center;
+        margin-bottom: 2rem;
+    }
+    
+    h1 {
+        color: var(--primary);
+        font-size: 2.5rem;
+        margin-bottom: 0.5rem;
+    }
+    
+    .subtitle {
+        color: var(--gray);
+        font-size: 1.1rem;
+        font-weight: 400;
+    }
+    
+    .app-container {
+        background-color: white;
+        border-radius: 12px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        padding: 2rem;
+        margin-bottom: 2rem;
+    }
+    
+    .step {
+        margin-bottom: 2rem;
+        padding-bottom: 2rem;
+        border-bottom: 1px solid #e9ecef;
+    }
+    
+    .step:last-child {
+        border-bottom: none;
+        margin-bottom: 0;
+        padding-bottom: 0;
+    }
+    
+    .step-title {
+        display: flex;
+        align-items: center;
+        margin-bottom: 1rem;
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: var(--secondary);
+    }
+    
+    .step-number {
+        background-color: var(--secondary);
+        color: white;
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 10px;
+        font-size: 0.9rem;
+        font-weight: 600;
+    }
+    
+    .upload-area {
+        border: 2px dashed #d1d5db;
+        border-radius: 8px;
+        padding: 2rem;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        background-color: #f8fafc;
+    }
+    
+    .upload-area:hover {
+        border-color: var(--primary);
+        background-color: #f0f7ff;
+    }
+    
+    .upload-icon {
+        font-size: 3rem;
+        color: var(--primary);
+        margin-bottom: 1rem;
+    }
+    
+    .file-input {
+        display: none;
+    }
+    
+    .btn {
+        display: inline-block;
+        background-color: var(--primary);
+        color: white;
+        padding: 0.75rem 1.5rem;
+        border-radius: 6px;
+        border: none;
+        font-size: 1rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-align: center;
+        text-decoration: none;
+    }
+    
+    .btn:hover {
+        background-color: var(--primary-dark);
+        transform: translateY(-2px);
+    }
+    
+    .btn:active {
+        transform: translateY(0);
+    }
+    
+    .btn-secondary {
+        background-color: white;
+        color: var(--primary);
+        border: 1px solid var(--primary);
+    }
+    
+    .btn-secondary:hover {
+        background-color: #f0f7ff;
+    }
+    
+    .btn-success {
+        background-color: var(--success);
+    }
+    
+    .btn-success:hover {
+        background-color: #2d9300;
+    }
+    
+    .btn-block {
+        display: block;
+        width: 100%;
+    }
+    
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+    
+    .form-label {
+        display: block;
+        margin-bottom: 0.5rem;
+        font-weight: 500;
+    }
+    
+    .form-control {
+        width: 100%;
+        padding: 0.75rem;
+        border: 1px solid #d1d5db;
+        border-radius: 6px;
+        font-size: 1rem;
+        transition: border-color 0.3s ease;
+    }
+    
+    .form-control:focus {
+        outline: none;
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.15);
+    }
+    
+    .preview-container {
+        margin-top: 1.5rem;
+    }
+    
+    .preview-page {
+        margin-bottom: 1.5rem;
+        padding: 1rem;
+        border: 1px solid #e9ecef;
+        border-radius: 8px;
+        background-color: #f8f9fa;
+    }
+    
+    .preview-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1rem;
+    }
+    
+    .preview-title {
+        font-weight: 600;
+    }
+    
+    .preview-canvas {
+        max-width: 100%;
+        height: auto;
+        border: 1px solid #e9ecef;
+        border-radius: 4px;
+    }
+    
+    .text-selection-area {
+        position: relative;
+        margin-top: 1rem;
+        border: 1px solid #e9ecef;
+        border-radius: 8px;
+        padding: 1rem;
+        background-color: white;
+    }
+    
+    .selection-box {
+        position: absolute;
+        border: 2px solid var(--primary);
+        background-color: rgba(67, 97, 238, 0.1);
+        pointer-events: none;
+    }
+    
+    .alert {
+        padding: 1rem;
+        border-radius: 6px;
+        margin-bottom: 1rem;
+        font-weight: 500;
+    }
+    
+    .alert-info {
+        background-color: #e0f2fe;
+        color: #0369a1;
+    }
+    
+    .alert-success {
+        background-color: #dcfce7;
+        color: #166534;
+    }
+    
+    .alert-warning {
+        background-color: #fef3c7;
+        color: #92400e;
+    }
+    
+    .progress-container {
+        margin-top: 1rem;
+        background-color: #e9ecef;
+        border-radius: 4px;
+        height: 10px;
+        overflow: hidden;
+    }
+    
+    .progress-bar {
+        height: 100%;
+        background-color: var(--primary);
+        width: 0%;
+        transition: width 0.3s ease;
+    }
+    
+    .result-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.75rem;
+        border: 1px solid #e9ecef;
+        border-radius: 6px;
+        margin-bottom: 0.5rem;
+        background-color: white;
+    }
+    
+    .result-name {
+        font-weight: 500;
+    }
+    
+    .hidden {
+        display: none;
+    }
+    
+    .flex {
+        display: flex;
+    }
+    
+    .justify-between {
+        justify-content: space-between;
+    }
+    
+    .items-center {
+        align-items: center;
+    }
+    
+    .gap-2 {
+        gap: 0.5rem;
+    }
+    
+    .mt-4 {
+        margin-top: 1rem;
+    }
+    
+    .mb-4 {
+        margin-bottom: 1rem;
+    }
+    
+    .text-center {
+        text-align: center;
+    }
+    
+    .badge {
+        display: inline-block;
+        padding: 0.25rem 0.5rem;
+        border-radius: 4px;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+    
+    .badge-success {
+        background-color: #dcfce7;
+        color: #166534;
+    }
+    
+    .badge-warning {
+        background-color: #fef3c7;
+        color: #92400e;
+    }
+    
+    .badge-danger {
+        background-color: #fee2e2;
+        color: #b91c1c;
+    }
+    
+    .preview-names-container {
+        max-height: 300px;
+        overflow-y: auto;
+        border: 1px solid #e9ecef;
+        border-radius: 6px;
+        padding: 0.5rem;
+        margin-top: 1rem;
+    }
+    
+    .preview-name-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.5rem;
+        border-bottom: 1px solid #e9ecef;
+    }
+    
+    .preview-name-item:last-child {
+        border-bottom: none;
+    }
+    
+    .preview-name-edit {
+        cursor: pointer;
+        color: var(--primary);
+    }
+    
+    .preview-name-edit:hover {
+        text-decoration: underline;
+    }
+    
+    @media (max-width: 768px) {
+        .container {
+            padding: 1rem;
+        }
+        
+        .app-container {
+            padding: 1.5rem;
+        }
+        
+        h1 {
+            font-size: 2rem;
+        }
+    }
+</style>
+    <div class="app-container">
+        <div class="step" id="step1">
+            <div class="step-title">
+                <div class="step-number">1</div>
+                <span>Selecione o arquivo PDF</span>
+            </div>
+            
+            <div class="upload-area" id="uploadArea">
+                <div class="upload-icon">📄</div>
+                <h3>Arraste e solte seu arquivo PDF aqui</h3>
+                <p>ou</p>
+                <button class="btn" id="selectFileBtn">Selecionar arquivo</button>
+                <input type="file" id="pdfInput" class="file-input" accept=".pdf">
+            </div>
+            
+            <div id="fileInfo" class="mt-4 hidden">
+                <div class="alert alert-info">
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <strong id="fileName"></strong>
+                            <div id="filePages"></div>
+                        </div>
+                        <button class="btn btn-secondary" id="changeFileBtn">Trocar arquivo</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="step hidden" id="step2">
+            <div class="step-title">
+                <div class="step-number">2</div>
+                <span>Defina a área do nome do funcionário</span>
+            </div>
+            
+            <div class="alert alert-info mb-4">
+                Selecione uma página de exemplo e defina a região onde o nome do funcionário aparece. 
+                O aplicativo aplicará automaticamente essa mesma seleção a todas as páginas.
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label" for="pageSelector">Selecione uma página de exemplo:</label>
+                <select class="form-control" id="pageSelector"></select>
+            </div>
+            
+            <div class="preview-container">
+                <div class="preview-page">
+                    <div class="preview-header">
+                        <div class="preview-title">Visualização da página</div>
+                        <div>
+                            <button class="btn btn-secondary" id="zoomInBtn">+</button>
+                            <button class="btn btn-secondary" id="zoomOutBtn">-</button>
+                            <button class="btn btn-secondary" id="resetZoomBtn">Reset</button>
+                        </div>
+                    </div>
+                    
+                    <div id="canvasContainer" style="overflow: auto; max-height: 600px;">
+                        <canvas id="pdfCanvas"></canvas>
+                    </div>
+                    
+                    <div class="text-selection-area">
+                        <p>Clique e arraste para selecionar a área onde está o nome do funcionário:</p>
+                        <div id="selectionArea" style="position: relative; margin-top: 10px;">
+                            <canvas id="selectionCanvas"></canvas>
+                            <div id="selectionBox" class="selection-box" style="display: none;"></div>
+                        </div>
+                        
+                        <div id="extractedText" class="mt-4 hidden">
+                            <div class="alert alert-success">
+                                <strong>Texto extraído:</strong>
+                                <div id="extractedTextContent"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="form-group mt-4">
+                <button class="btn" id="testSelectionBtn">Testar em todas as páginas</button>
+            </div>
+            
+            <div id="testResults" class="hidden">
+                <div class="alert alert-info">
+                    <strong>Resultados do teste:</strong>
+                    <p>Nomes extraídos de todas as páginas usando a mesma seleção.</p>
+                </div>
+                
+                <div class="preview-names-container" id="previewNamesContainer"></div>
+            </div>
+            
+            <div class="flex justify-between mt-4">
+                <button class="btn btn-secondary" id="backToStep1Btn">Voltar</button>
+                <button class="btn" id="goToStep3Btn" disabled>Continuar</button>
+            </div>
+        </div>
+        
+        <div class="step hidden" id="step3">
+            <div class="step-title">
+                <div class="step-number">3</div>
+                <span>Configurar e processar</span>
+            </div>
+            
+            <div class="alert alert-info mb-4">
+                Revise os nomes extraídos e configure as opções de processamento.
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label" for="filenamePattern">Padrão de nome de arquivo:</label>
+                <input type="text" class="form-control" id="filenamePattern" value="{nome}_folha_ponto.pdf" placeholder="Ex: {nome}_folha_ponto.pdf">
+                <small>Use {nome} para inserir o nome do funcionário</small>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">Nomes extraídos:</label>
+                <div class="preview-names-container" id="finalNamesContainer"></div>
+            </div>
+            
+            <div id="processingStatus" class="hidden">
+                <div class="alert alert-info">
+                    <p>Processando arquivos... Por favor, aguarde.</p>
+                    <div class="progress-container mt-4">
+                        <div class="progress-bar" id="progressBar"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <div id="processingComplete" class="hidden">
+                <div class="alert alert-success">
+                    <p>Processamento concluído! Seus arquivos estão prontos para download.</p>
+                </div>
+                
+                <div id="resultsList" class="mt-4"></div>
+            </div>
+            
+            <div class="flex justify-between mt-4">
+                <button class="btn btn-secondary" id="backToStep2Btn">Voltar</button>
+                <button class="btn btn-success" id="processBtn">Processar e Baixar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Elementos da interface
+        const uploadArea = document.getElementById('uploadArea');
+        const pdfInput = document.getElementById('pdfInput');
+        const selectFileBtn = document.getElementById('selectFileBtn');
+        const fileInfo = document.getElementById('fileInfo');
+        const fileName = document.getElementById('fileName');
+        const filePages = document.getElementById('filePages');
+        const changeFileBtn = document.getElementById('changeFileBtn');
+        const step1 = document.getElementById('step1');
+        const step2 = document.getElementById('step2');
+        const step3 = document.getElementById('step3');
+        const pageSelector = document.getElementById('pageSelector');
+        const pdfCanvas = document.getElementById('pdfCanvas');
+        const selectionCanvas = document.getElementById('selectionCanvas');
+        const selectionBox = document.getElementById('selectionBox');
+        const extractedText = document.getElementById('extractedText');
+        const extractedTextContent = document.getElementById('extractedTextContent');
+        const backToStep1Btn = document.getElementById('backToStep1Btn');
+        const goToStep3Btn = document.getElementById('goToStep3Btn');
+        const backToStep2Btn = document.getElementById('backToStep2Btn');
+        const processBtn = document.getElementById('processBtn');
+        const zoomInBtn = document.getElementById('zoomInBtn');
+        const zoomOutBtn = document.getElementById('zoomOutBtn');
+        const resetZoomBtn = document.getElementById('resetZoomBtn');
+        const testSelectionBtn = document.getElementById('testSelectionBtn');
+        const testResults = document.getElementById('testResults');
+        const previewNamesContainer = document.getElementById('previewNamesContainer');
+        const finalNamesContainer = document.getElementById('finalNamesContainer');
+        const filenamePattern = document.getElementById('filenamePattern');
+        const processingStatus = document.getElementById('processingStatus');
+        const progressBar = document.getElementById('progressBar');
+        const processingComplete = document.getElementById('processingComplete');
+        const resultsList = document.getElementById('resultsList');
+
+        // Variáveis globais
+        let pdfDoc = null;
+        let pdfPages = 0;
+        let currentPage = 1;
+        let scale = 1.0;
+        let selectionStart = { x: 0, y: 0 };
+        let selectionEnd = { x: 0, y: 0 };
+        let isSelecting = false;
+        let selectionCoords = null;
+        let extractedNames = [];
+        let pdfData = null;
+
+        // Eventos de upload
+        uploadArea.addEventListener('dragover', function(e) {
+            e.preventDefault();
+            uploadArea.style.borderColor = '#4361ee';
+            uploadArea.style.backgroundColor = '#f0f7ff';
+        });
+
+        uploadArea.addEventListener('dragleave', function() {
+            uploadArea.style.borderColor = '#d1d5db';
+            uploadArea.style.backgroundColor = '#f8fafc';
+        });
+
+        uploadArea.addEventListener('drop', function(e) {
+            e.preventDefault();
+            uploadArea.style.borderColor = '#d1d5db';
+            uploadArea.style.backgroundColor = '#f8fafc';
+            
+            if (e.dataTransfer.files.length > 0 && e.dataTransfer.files[0].type === 'application/pdf') {
+                pdfInput.files = e.dataTransfer.files;
+                handleFileSelect();
+            }
+        });
+
+        selectFileBtn.addEventListener('click', function() {
+            pdfInput.click();
+        });
+
+        pdfInput.addEventListener('change', handleFileSelect);
+
+        changeFileBtn.addEventListener('click', function() {
+            pdfInput.value = '';
+            pdfInput.click();
+        });
+
+        // Navegação entre etapas
+        backToStep1Btn.addEventListener('click', function() {
+            step2.classList.add('hidden');
+            step1.classList.remove('hidden');
+        });
+
+        goToStep3Btn.addEventListener('click', function() {
+            prepareStep3();
+            step2.classList.add('hidden');
+            step3.classList.remove('hidden');
+        });
+
+        backToStep2Btn.addEventListener('click', function() {
+            step3.classList.add('hidden');
+            step2.classList.remove('hidden');
+        });
+
+        // Controles de zoom
+        zoomInBtn.addEventListener('click', function() {
+            scale += 0.2;
+            renderPage(currentPage);
+        });
+
+        zoomOutBtn.addEventListener('click', function() {
+            if (scale > 0.4) {
+                scale -= 0.2;
+                renderPage(currentPage);
+            }
+        });
+
+        resetZoomBtn.addEventListener('click', function() {
+            scale = 1.0;
+            renderPage(currentPage);
+        });
+
+        // Seleção de página
+        pageSelector.addEventListener('change', function() {
+            currentPage = parseInt(pageSelector.value);
+            renderPage(currentPage);
+            
+            // Limpar seleção anterior
+            selectionBox.style.display = 'none';
+            extractedText.classList.add('hidden');
+            testResults.classList.add('hidden');
+            goToStep3Btn.disabled = true;
+        });
+
+        // Seleção de área
+        selectionCanvas.addEventListener('mousedown', function(e) {
+            const rect = selectionCanvas.getBoundingClientRect();
+            selectionStart.x = e.clientX - rect.left;
+            selectionStart.y = e.clientY - rect.top;
+            isSelecting = true;
+            selectionBox.style.display = 'block';
+            selectionBox.style.left = selectionStart.x + 'px';
+            selectionBox.style.top = selectionStart.y + 'px';
+            selectionBox.style.width = '0px';
+            selectionBox.style.height = '0px';
+            
+            // Limpar resultados anteriores
+            extractedText.classList.add('hidden');
+            testResults.classList.add('hidden');
+            goToStep3Btn.disabled = true;
+        });
+
+        selectionCanvas.addEventListener('mousemove', function(e) {
+            if (!isSelecting) return;
+            
+            const rect = selectionCanvas.getBoundingClientRect();
+            selectionEnd.x = e.clientX - rect.left;
+            selectionEnd.y = e.clientY - rect.top;
+            
+            const width = selectionEnd.x - selectionStart.x;
+            const height = selectionEnd.y - selectionStart.y;
+            
+            selectionBox.style.width = Math.abs(width) + 'px';
+            selectionBox.style.height = Math.abs(height) + 'px';
+            
+            if (width < 0) {
+                selectionBox.style.left = selectionEnd.x + 'px';
+            }
+            
+            if (height < 0) {
+                selectionBox.style.top = selectionEnd.y + 'px';
+            }
+        });
+
+        selectionCanvas.addEventListener('mouseup', function() {
+            if (!isSelecting) return;
+            isSelecting = false;
+            
+            // Calcular coordenadas normalizadas (0-1)
+            const canvasWidth = selectionCanvas.width;
+            const canvasHeight = selectionCanvas.height;
+            
+            const x1 = Math.min(selectionStart.x, selectionEnd.x) / canvasWidth;
+            const y1 = Math.min(selectionStart.y, selectionEnd.y) / canvasHeight;
+            const x2 = Math.max(selectionStart.x, selectionEnd.x) / canvasWidth;
+            const y2 = Math.max(selectionStart.y, selectionEnd.y) / canvasHeight;
+            
+            selectionCoords = { x1, y1, x2, y2 };
+            
+            // Extrair texto da área selecionada
+            extractTextFromRegion(currentPage, selectionCoords).then(text => {
+                extractedTextContent.textContent = text.trim();
+                extractedText.classList.remove('hidden');
+                
+                if (text.trim()) {
+                    testSelectionBtn.disabled = false;
+                } else {
+                    testSelectionBtn.disabled = true;
+                }
+            });
+        });
+
+        // Testar seleção em todas as páginas
+        testSelectionBtn.addEventListener('click', async function() {
+            if (!selectionCoords) {
+                alert('Por favor, selecione primeiro a área do nome.');
+                return;
+            }
+            
+            testSelectionBtn.disabled = true;
+            testSelectionBtn.textContent = 'Processando...';
+            
+            try {
+                // Extrair nomes de todas as páginas
+                extractedNames = [];
+                
+                for (let i = 1; i <= pdfPages; i++) {
+                    const name = await extractTextFromRegion(i, selectionCoords);
+                    extractedNames.push(name.trim());
+                }
+                
+                // Mostrar resultados
+                previewNamesContainer.innerHTML = '';
+                
+                let allValid = true;
+                
+                extractedNames.forEach((name, index) => {
+                    const isValid = name.trim().length > 0;
+                    if (!isValid) allValid = false;
+                    
+                    const item = document.createElement('div');
+                    item.className = 'preview-name-item';
+                    item.innerHTML = `
+                        <div>
+                            <strong>Página ${index + 1}:</strong> 
+                            ${name.trim() || '<span style="color: #d90429;">(Nenhum texto encontrado)</span>'}
+                        </div>
+                        <div>
+                            <span class="badge ${isValid ? 'badge-success' : 'badge-danger'}">
+                                ${isValid ? 'OK' : 'Vazio'}
+                            </span>
+                        </div>
+                    `;
+                    previewNamesContainer.appendChild(item);
+                });
+                
+                testResults.classList.remove('hidden');
+                goToStep3Btn.disabled = !allValid;
+                
+                if (!allValid) {
+                    const warning = document.createElement('div');
+                    warning.className = 'alert alert-warning mt-4';
+                    warning.innerHTML = `
+                        <strong>Atenção:</strong> Algumas páginas não tiveram nomes extraídos corretamente.
+                        Tente ajustar a área de seleção ou verificar se todas as páginas seguem o mesmo padrão.
+                    `;
+                    testResults.appendChild(warning);
+                }
+                
+            } catch (error) {
+                console.error('Erro ao testar seleção:', error);
+                alert('Ocorreu um erro ao testar a seleção. Por favor, tente novamente.');
+            } finally {
+                testSelectionBtn.disabled = false;
+                testSelectionBtn.textContent = 'Testar em todas as páginas';
+            }
+        });
+
+        // Processamento final
+        processBtn.addEventListener('click', async function() {
+            processingStatus.classList.remove('hidden');
+            processBtn.disabled = true;
+            
+            try {
+                const zip = new JSZip();
+                const pattern = filenamePattern.value || '{nome}_folha_ponto.pdf';
+                
+                for (let i = 0; i < extractedNames.length; i++) {
+                    const name = extractedNames[i].trim();
+                    if (!name) continue;
+                    
+                    const pageNum = i + 1;
+                    const fileName = pattern.replace('{nome}', name);
+                    
+                    // Criar PDF individual para esta página
+                    const pdfBytes = await createSinglePagePdf(pageNum);
+                    zip.file(fileName, pdfBytes);
+                    
+                    // Atualizar progresso
+                    const progress = ((i + 1) / extractedNames.length) * 100;
+                    progressBar.style.width = progress + '%';
+                }
+                
+                // Gerar o arquivo ZIP
+                const zipContent = await zip.generateAsync({type: 'blob'});
+                
+                // Mostrar resultados
+                processingStatus.classList.add('hidden');
+                processingComplete.classList.remove('hidden');
+                
+                // Criar lista de resultados
+                let resultsHTML = '';
+                extractedNames.forEach((name, index) => {
+                    if (!name.trim()) return;
+                    
+                    const fileName = filenamePattern.value.replace('{nome}', name);
+                    resultsHTML += `
+                        <div class="result-item">
+                            <div class="result-name">${fileName}</div>
+                            <div>Página ${index + 1}</div>
+                        </div>
+                    `;
+                });
+                
+                resultsList.innerHTML = resultsHTML;
+                
+                // Botão para download do ZIP
+                const downloadBtn = document.createElement('button');
+                downloadBtn.className = 'btn btn-success btn-block mt-4';
+                downloadBtn.textContent = 'Baixar todos os arquivos (ZIP)';
+                downloadBtn.addEventListener('click', function() {
+                    saveAs(zipContent, 'arquivos_pdf_renomeados.zip');
+                });
+                
+                resultsList.appendChild(downloadBtn);
+                
+            } catch (error) {
+                console.error('Erro ao processar arquivos:', error);
+                processingStatus.classList.add('hidden');
+                processingComplete.classList.remove('hidden');
+                resultsList.innerHTML = `
+                    <div class="alert alert-warning">
+                        Ocorreu um erro ao processar os arquivos. Por favor, tente novamente.
+                    </div>
+                `;
+                processBtn.disabled = false;
+            }
+        });
+
+        // Funções auxiliares
+        async function handleFileSelect() {
+            if (pdfInput.files.length === 0) return;
+            
+            const file = pdfInput.files[0];
+            
+            if (file.type !== 'application/pdf') {
+                alert('Por favor, selecione um arquivo PDF válido.');
+                return;
+            }
+            
+            // Mostrar informações do arquivo
+            fileName.textContent = file.name;
+            fileInfo.classList.remove('hidden');
+            
+            // Carregar o PDF
+            const fileReader = new FileReader();
+            
+            fileReader.onload = async function() {
+                pdfData = new Uint8Array(fileReader.result);
+                
+                try {
+                    pdfDoc = await pdfjsLib.getDocument({data: pdfData}).promise;
+                    pdfPages = pdfDoc.numPages;
+                    filePages.textContent = `${pdfPages} páginas`;
+                    
+                    // Preparar para a próxima etapa
+                    prepareStep2();
+                    
+                    // Avançar para a etapa 2
+                    step1.classList.add('hidden');
+                    step2.classList.remove('hidden');
+                    
+                } catch (error) {
+                    console.error('Erro ao carregar o PDF:', error);
+                    alert('Não foi possível carregar o PDF. Verifique se o arquivo é válido.');
+                }
+            };
+            
+            fileReader.readAsArrayBuffer(file);
+        }
+
+        async function prepareStep2() {
+            // Preencher o seletor de páginas
+            pageSelector.innerHTML = '';
+            for (let i = 1; i <= pdfPages; i++) {
+                const option = document.createElement('option');
+                option.value = i;
+                option.textContent = `Página ${i}`;
+                pageSelector.appendChild(option);
+            }
+            
+            // Renderizar a primeira página
+            currentPage = 1;
+            renderPage(currentPage);
+            
+            // Limpar seleções anteriores
+            selectionBox.style.display = 'none';
+            extractedText.classList.add('hidden');
+            testResults.classList.add('hidden');
+            goToStep3Btn.disabled = true;
+            testSelectionBtn.disabled = true;
+        }
+
+        async function renderPage(pageNumber) {
+            const page = await pdfDoc.getPage(pageNumber);
+            
+            const viewport = page.getViewport({scale});
+            pdfCanvas.width = viewport.width;
+            pdfCanvas.height = viewport.height;
+            
+            const canvasContext = pdfCanvas.getContext('2d');
+            await page.render({canvasContext, viewport}).promise;
+            
+            // Copiar para o canvas de seleção
+            selectionCanvas.width = viewport.width;
+            selectionCanvas.height = viewport.height;
+            const selectionContext = selectionCanvas.getContext('2d');
+            selectionContext.drawImage(pdfCanvas, 0, 0);
+        }
+
+        async function extractTextFromRegion(pageNumber, coords) {
+            const page = await pdfDoc.getPage(pageNumber);
+            const viewport = page.getViewport({scale: 1.0});
+            
+            // Converter coordenadas normalizadas para pontos do PDF
+            const x1 = coords.x1 * viewport.width;
+            const y1 = coords.y1 * viewport.height;
+            const x2 = coords.x2 * viewport.width;
+            const y2 = coords.y2 * viewport.height;
+            
+            // Extrair texto da região
+            const textContent = await page.getTextContent();
+            let extractedText = '';
+            
+            for (const item of textContent.items) {
+                const tx = item.transform[4];
+                const ty = item.transform[5];
+                const width = item.width;
+                const height = item.height || 10; // Altura aproximada se não fornecida
+                
+                // Verificar se o item de texto está dentro da região selecionada
+                if (tx >= x1 && tx + width <= x2 && 
+                    viewport.height - ty >= y1 && viewport.height - ty - height <= y2) {
+                    extractedText += item.str + ' ';
+                }
+            }
+            
+            return extractedText.trim();
+        }
+
+        async function prepareStep3() {
+            finalNamesContainer.innerHTML = '';
+            
+            extractedNames.forEach((name, index) => {
+                const item = document.createElement('div');
+                item.className = 'preview-name-item';
+                
+                const nameInput = document.createElement('input');
+                nameInput.type = 'text';
+                nameInput.className = 'form-control';
+                nameInput.value = name;
+                nameInput.dataset.index = index;
+                nameInput.addEventListener('change', function() {
+                    extractedNames[this.dataset.index] = this.value.trim();
+                });
+                
+                const label = document.createElement('label');
+                label.className = 'form-label';
+                label.textContent = `Página ${index + 1}:`;
+                
+                const formGroup = document.createElement('div');
+                formGroup.className = 'form-group mb-2';
+                formGroup.appendChild(label);
+                formGroup.appendChild(nameInput);
+                
+                item.appendChild(formGroup);
+                finalNamesContainer.appendChild(item);
+            });
+        }
+
+        async function createSinglePagePdf(pageNum) {
+            // Criar um novo PDF com apenas uma página
+            const { PDFDocument } = PDFLib;
+            
+            // Carregar o PDF original
+            const originalPdfDoc = await PDFDocument.load(pdfData);
+            const newPdfDoc = await PDFDocument.create();
+            
+            // Copiar a página do PDF original
+            const [copiedPage] = await newPdfDoc.copyPages(originalPdfDoc, [pageNum - 1]);
+            newPdfDoc.addPage(copiedPage);
+            
+            // Salvar o novo PDF
+            const pdfBytes = await newPdfDoc.save();
+            return pdfBytes;
+        }
+    });
+</script>
