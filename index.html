@@ -698,7 +698,7 @@
                 </svg>
                 PDF Renamer
             </div>
-            <div class="app-version">v1.1.0</div>
+            <div class="app-version">v1.2.0</div>
         </div>
     </header>
 
@@ -1020,7 +1020,7 @@
             const processingError = document.getElementById('processingError');
             const resultFiles = document.getElementById('resultFiles');
             const startOverBtn = document.getElementById('startOver');
-            const downloadZipBtn = document.getElementById('downloadZipBtn');
+            const downloadZipBtn = document.getElementById('downloadZip');
 
             // Etapas
             const step1 = document.getElementById('step1');
@@ -1031,7 +1031,7 @@
 
             // Variáveis globais
             let pdfDoc = null;
-            let pdfData = null;
+            let pdfBytes = null; // Armazenar os bytes do PDF original
             let currentPage = 1;
             let totalPages = 0;
             let scale = 1.5;
@@ -1176,7 +1176,7 @@
             });
 
             // Download do ZIP
-            document.getElementById('downloadZip').addEventListener('click', downloadZip);
+            downloadZipBtn.addEventListener('click', downloadZip);
 
             // Validação de inputs numéricos
             pagesPerDocumentInput.addEventListener('input', validatePagesPerDocument);
@@ -1230,17 +1230,19 @@
                 const fileReader = new FileReader();
                 fileReader.onload = async function() {
                     try {
-                        // Armazenar os dados do PDF
-                        pdfData = new Uint8Array(fileReader.result);
+                        // Armazenar os bytes do PDF original
+                        pdfBytes = new Uint8Array(fileReader.result);
                         
                         // Verificar se os dados são válidos
-                        if (pdfData.length < 10) {
+                        if (!pdfBytes || pdfBytes.length < 10) {
                             throw new Error("O arquivo PDF parece estar corrompido ou vazio");
                         }
                         
-                        // Carregar o PDF
+                        console.log(`PDF carregado: ${pdfBytes.length} bytes`);
+                        
+                        // Carregar o PDF com PDF.js
                         try {
-                            pdfDoc = await pdfjsLib.getDocument({data: pdfData}).promise;
+                            pdfDoc = await pdfjsLib.getDocument({data: pdfBytes}).promise;
                             totalPages = pdfDoc.numPages;
                             filePages.textContent = `${totalPages} páginas`;
                             
@@ -1250,8 +1252,10 @@
                             // Configurar valores máximos
                             pagesPerDocumentInput.max = totalPages;
                             validatePagesPerDocument();
+                            
+                            console.log(`PDF carregado com sucesso: ${totalPages} páginas`);
                         } catch (e) {
-                            console.error("Erro ao carregar PDF:", e);
+                            console.error("Erro ao carregar PDF com PDF.js:", e);
                             throw new Error("Não foi possível processar este PDF. Por favor, tente com outro arquivo.");
                         }
                     } catch (error) {
@@ -1466,6 +1470,11 @@
                 try {
                     console.log('Iniciando processamento do PDF...');
                     
+                    // Verificar se temos os bytes do PDF
+                    if (!pdfBytes || pdfBytes.length === 0) {
+                        throw new Error("Dados do PDF não estão disponíveis. Por favor, recarregue a página e tente novamente.");
+                    }
+                    
                     // Obter configurações
                     const pagesPerDocument = parseInt(pagesPerDocumentInput.value);
                     const textPageOffset = parseInt(textPageNumberInput.value) - 1; // Converter para índice baseado em 0
@@ -1478,6 +1487,21 @@
                     processedFiles = [];
                     pdfBlobs = {};
                     zip = new JSZip();
+                    
+                    // Pré-carregar o PDF com PDF-LIB para processamento
+                    console.log("Carregando PDF com PDF-LIB...");
+                    const { PDFDocument } = PDFLib;
+                    let originalPdfDoc;
+                    
+                    try {
+                        // Converter Uint8Array para ArrayBuffer se necessário
+                        const arrayBuffer = pdfBytes.buffer || pdfBytes;
+                        originalPdfDoc = await PDFDocument.load(arrayBuffer);
+                        console.log("PDF carregado com sucesso no PDF-LIB");
+                    } catch (error) {
+                        console.error("Erro ao carregar PDF com PDF-LIB:", error);
+                        throw new Error("Não foi possível processar o PDF. Erro: " + error.message);
+                    }
                     
                     // Processar cada documento
                     for (let docIndex = 0; docIndex < numDocuments; docIndex++) {
@@ -1529,18 +1553,23 @@
                             await new Promise(resolve => setTimeout(resolve, 10));
                             
                             try {
-                                // Criar PDF de página única
-                                const pdfBytes = await createSinglePagePdf(pageNum);
+                                // Criar PDF de página única usando o documento já carregado
+                                const newPdfDoc = await PDFDocument.create();
+                                const [copiedPage] = await newPdfDoc.copyPages(originalPdfDoc, [pageNum - 1]);
+                                newPdfDoc.addPage(copiedPage);
+                                
+                                // Salvar o novo PDF
+                                const pagePdfBytes = await newPdfDoc.save();
                                 
                                 // Gerar nome do arquivo
                                 const pageInDoc = pageNum - startPage + 1;
                                 const fileName = generateFileName(docName, pageInDoc);
                                 
                                 // Adicionar ao ZIP
-                                zip.file(`${fileName}.pdf`, pdfBytes);
+                                zip.file(`${fileName}.pdf`, pagePdfBytes);
                                 
                                 // Armazenar o blob para download individual
-                                const pdfBlob = new Blob([pdfBytes], { type: 'application/pdf' });
+                                const pdfBlob = new Blob([pagePdfBytes], { type: 'application/pdf' });
                                 pdfBlobs[`${fileName}.pdf`] = pdfBlob;
                                 
                                 processedFiles.push({
@@ -1581,55 +1610,6 @@
                         step4.classList.add('hidden');
                         step5.classList.remove('hidden');
                     }, 500);
-                }
-            }
-
-            // Função para criar PDF de página única
-            async function createSinglePagePdf(pageNum) {
-                try {
-                    // Criar um novo PDF com apenas uma página
-                    const { PDFDocument } = PDFLib;
-                    
-                    // Verificar se os dados do PDF são válidos
-                    if (!pdfData || pdfData.length === 0) {
-                        throw new Error("Dados do PDF inválidos ou vazios");
-                    }
-                    
-                    // Carregar o PDF original
-                    let originalPdfDoc;
-                    try {
-                        originalPdfDoc = await PDFDocument.load(pdfData.buffer || pdfData);
-                    } catch (e) {
-                        console.error("Erro ao carregar PDF original:", e);
-                        
-                        // Tentar abordagem alternativa
-                        const arrayBuffer = pdfData.buffer || pdfData;
-                        const blob = new Blob([arrayBuffer], { type: 'application/pdf' });
-                        const reader = new FileReader();
-                        
-                        // Usar Promise para FileReader
-                        const pdfBytes = await new Promise((resolve, reject) => {
-                            reader.onload = () => resolve(reader.result);
-                            reader.onerror = reject;
-                            reader.readAsArrayBuffer(blob);
-                        });
-                        
-                        originalPdfDoc = await PDFDocument.load(pdfBytes);
-                    }
-                    
-                    // Criar novo documento
-                    const newPdfDoc = await PDFDocument.create();
-                    
-                    // Copiar a página do PDF original
-                    const [copiedPage] = await newPdfDoc.copyPages(originalPdfDoc, [pageNum - 1]);
-                    newPdfDoc.addPage(copiedPage);
-                    
-                    // Salvar o novo PDF
-                    const pdfBytes = await newPdfDoc.save();
-                    return pdfBytes;
-                } catch (error) {
-                    console.error("Erro ao criar PDF de página única:", error);
-                    throw error;
                 }
             }
 
@@ -1775,7 +1755,7 @@
             function resetApp() {
                 // Resetar variáveis
                 pdfDoc = null;
-                pdfData = null;
+                pdfBytes = null;
                 currentPage = 1;
                 totalPages = 0;
                 scale = 1.5;
@@ -1818,5 +1798,5 @@
             console.log('Aplicação inicializada com sucesso!');
         }
     </script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'95162e2f906c6e30',t:'MTc1MDIwMTQwOC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9516449c80e0f1b1',t:'MTc1MDIwMjMyNi4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
