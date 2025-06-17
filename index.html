@@ -1,5 +1,3 @@
-
-
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -617,6 +615,50 @@
             display: none !important;
         }
 
+        /* Estilos para download individual */
+        .download-individual {
+            margin-left: 0.5rem;
+            color: var(--primary);
+            cursor: pointer;
+        }
+
+        .download-individual:hover {
+            text-decoration: underline;
+        }
+
+        /* Estilos para o modal de debug */
+        .debug-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .debug-modal-content {
+            background-color: white;
+            padding: 2rem;
+            border-radius: var(--radius);
+            max-width: 80%;
+            max-height: 80%;
+            overflow: auto;
+        }
+
+        .debug-close {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+
         @media (max-width: 768px) {
             .container {
                 padding: 1rem;
@@ -644,7 +686,7 @@
                 gap: 1rem;
             }
         }
-    </tysle>
+    </style>
 </head>
 <body>
     <header>
@@ -656,7 +698,7 @@
                 </svg>
                 PDF Renamer
             </div>
-            <div class="app-version">v1.0.0</div>
+            <div class="app-version">v1.1.0</div>
         </div>
     </header>
 
@@ -929,752 +971,852 @@
     </footer>
 
     <script>
-        // Configurar o worker do PDF.js
-        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.4.120/build/pdf.worker.min.js';
-
-        // Elementos da interface
-        const pdfFileInput = document.getElementById('pdfFile');
-        const fileInfo = document.getElementById('fileInfo');
-        const fileName = document.getElementById('fileName');
-        const fileSize = document.getElementById('fileSize');
-        const filePages = document.getElementById('filePages');
-        const continueToStep2 = document.getElementById('continueToStep2');
-        const backToStep1 = document.getElementById('backToStep1');
-        const continueToStep3 = document.getElementById('continueToStep3');
-        const backToStep2 = document.getElementById('backToStep2');
-        const continueToStep4 = document.getElementById('continueToStep4');
-        const pagesPerDocumentInput = document.getElementById('pagesPerDocument');
-        const textPageNumberInput = document.getElementById('textPageNumber');
-        const pdfCanvas = document.getElementById('pdfCanvas');
-        const pdfCanvasContainer = document.getElementById('pdfCanvasContainer');
-        const selectionOverlay = document.getElementById('selectionOverlay');
-        const selectionInstructions = document.getElementById('selectionInstructions');
-        const extractedTextContainer = document.getElementById('extractedTextContainer');
-        const extractedText = document.getElementById('extractedText');
-        const filenamePattern = document.getElementById('filenamePattern');
-        const prevPageBtn = document.getElementById('prevPage');
-        const nextPageBtn = document.getElementById('nextPage');
-        const pageInfo = document.getElementById('pageInfo');
-        const zoomInBtn = document.getElementById('zoomIn');
-        const zoomOutBtn = document.getElementById('zoomOut');
-        const progressFill = document.getElementById('progressFill');
-        const progressText = document.getElementById('progressText');
-        const progressPercent = document.getElementById('progressPercent');
-        const processingSuccess = document.getElementById('processingSuccess');
-        const processingError = document.getElementById('processingError');
-        const resultFiles = document.getElementById('resultFiles');
-        const startOverBtn = document.getElementById('startOver');
-        const downloadZipBtn = document.getElementById('downloadZip');
-
-        // Etapas
-        const step1 = document.getElementById('step1');
-        const step2 = document.getElementById('step2');
-        const step3 = document.getElementById('step3');
-        const step4 = document.getElementById('step4');
-        const step5 = document.getElementById('step5');
-
-        // Variáveis globais
-        let pdfDoc = null;
-        let pdfData = null;
-        let currentPage = 1;
-        let totalPages = 0;
-        let scale = 1.5;
-        let selectionActive = false;
-        let startX, startY, endX, endY;
-        let selectionCoordinates = null;
-        let canvasRect;
-        let processedFiles = [];
-        let zip = new JSZip();
-
-        // Evento de seleção de arquivo
-        pdfFileInput.addEventListener('change', handleFileSelect);
-
-        // Drag and drop para o upload de arquivo
-        const fileUpload = document.querySelector('.file-upload');
-        
-        fileUpload.addEventListener('dragover', (e) => {
-            e.preventDefault();
-            fileUpload.style.borderColor = 'var(--primary)';
-            fileUpload.style.backgroundColor = 'rgba(67, 97, 238, 0.1)';
-        });
-        
-        fileUpload.addEventListener('dragleave', (e) => {
-            e.preventDefault();
-            fileUpload.style.borderColor = 'var(--border)';
-            fileUpload.style.backgroundColor = 'rgba(0, 0, 0, 0.01)';
-        });
-        
-        fileUpload.addEventListener('drop', (e) => {
-            e.preventDefault();
-            fileUpload.style.borderColor = 'var(--border)';
-            fileUpload.style.backgroundColor = 'rgba(0, 0, 0, 0.01)';
-            
-            if (e.dataTransfer.files.length > 0) {
-                pdfFileInput.files = e.dataTransfer.files;
-                handleFileSelect();
-            }
+        // Verificar se o documento está pronto
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Documento carregado. Inicializando aplicação...');
+            initApp();
         });
 
-        // Navegação entre etapas
-        continueToStep2.addEventListener('click', () => {
-            step1.classList.add('hidden');
-            step2.classList.remove('hidden');
-        });
-
-        backToStep1.addEventListener('click', () => {
-            step2.classList.add('hidden');
-            step1.classList.remove('hidden');
-        });
-
-        continueToStep3.addEventListener('click', () => {
-            const pagesPerDocument = parseInt(pagesPerDocumentInput.value);
-            const textPageNumber = parseInt(textPageNumberInput.value);
-            
-            if (isNaN(pagesPerDocument) || pagesPerDocument < 1) {
-                alert('Por favor, insira um número válido de páginas por documento.');
-                return;
-            }
-            
-            if (isNaN(textPageNumber) || textPageNumber < 1 || textPageNumber > pagesPerDocument) {
-                alert(`Por favor, insira um número de página válido entre 1 e ${pagesPerDocument}.`);
-                return;
-            }
-            
-            step2.classList.add('hidden');
-            step3.classList.remove('hidden');
-            
-            // Calcular a primeira página do primeiro documento
-            const firstDocPage = 1 + (textPageNumber - 1);
-            currentPage = firstDocPage;
-            
-            renderPdfPage(currentPage);
-        });
-
-        backToStep2.addEventListener('click', () => {
-            step3.classList.add('hidden');
-            step2.classList.remove('hidden');
-        });
-
-        continueToStep4.addEventListener('click', () => {
-            step3.classList.add('hidden');
-            step4.classList.remove('hidden');
-            processPdf();
-        });
-
-        startOverBtn.addEventListener('click', () => {
-            resetApp();
-            step5.classList.add('hidden');
-            step1.classList.remove('hidden');
-        });
-
-        // Navegação do PDF
-        prevPageBtn.addEventListener('click', () => {
-            if (currentPage > 1) {
-                currentPage--;
-                renderPdfPage(currentPage);
-            }
-        });
-
-        nextPageBtn.addEventListener('click', () => {
-            if (currentPage < totalPages) {
-                currentPage++;
-                renderPdfPage(currentPage);
-            }
-        });
-
-        // Zoom do PDF
-        zoomInBtn.addEventListener('click', () => {
-            scale += 0.25;
-            renderPdfPage(currentPage);
-        });
-
-        zoomOutBtn.addEventListener('click', () => {
-            if (scale > 0.5) {
-                scale -= 0.25;
-                renderPdfPage(currentPage);
-            }
-        });
-
-        // Download do ZIP
-        downloadZipBtn.addEventListener('click', downloadZip);
-
-        // Validação de inputs numéricos
-        pagesPerDocumentInput.addEventListener('input', validatePagesPerDocument);
-        textPageNumberInput.addEventListener('input', validateTextPageNumber);
-
-        function validatePagesPerDocument() {
-            const pagesPerDocument = parseInt(pagesPerDocumentInput.value);
-            if (isNaN(pagesPerDocument) || pagesPerDocument < 1) {
-                pagesPerDocumentInput.setCustomValidity('Insira um número válido maior que 0');
-            } else if (pagesPerDocument > totalPages) {
-                pagesPerDocumentInput.setCustomValidity(`O valor não pode ser maior que o total de páginas (${totalPages})`);
+        function initApp() {
+            // Configurar o worker do PDF.js
+            if (typeof pdfjsLib !== 'undefined') {
+                console.log('PDF.js detectado. Configurando worker...');
+                pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.4.120/build/pdf.worker.min.js';
             } else {
-                pagesPerDocumentInput.setCustomValidity('');
-                
-                // Atualizar o valor máximo para o campo de página de texto
-                textPageNumberInput.max = pagesPerDocument;
-                validateTextPageNumber();
-            }
-        }
-
-        function validateTextPageNumber() {
-            const pagesPerDocument = parseInt(pagesPerDocumentInput.value);
-            const textPageNumber = parseInt(textPageNumberInput.value);
-            
-            if (isNaN(textPageNumber) || textPageNumber < 1) {
-                textPageNumberInput.setCustomValidity('Insira um número válido maior que 0');
-            } else if (textPageNumber > pagesPerDocument) {
-                textPageNumberInput.setCustomValidity(`O valor não pode ser maior que o número de páginas por documento (${pagesPerDocument})`);
-            } else {
-                textPageNumberInput.setCustomValidity('');
-            }
-        }
-
-        // Função para lidar com a seleção de arquivo
-        function handleFileSelect() {
-            if (pdfFileInput.files.length === 0) {
+                console.error('PDF.js não foi carregado corretamente!');
+                showError('Erro ao carregar bibliotecas necessárias. Por favor, recarregue a página.');
                 return;
             }
 
-            const file = pdfFileInput.files[0];
-            if (file.type !== 'application/pdf') {
-                alert('Por favor, selecione um arquivo PDF válido.');
+            // Elementos da interface
+            const pdfFileInput = document.getElementById('pdfFile');
+            const fileInfo = document.getElementById('fileInfo');
+            const fileName = document.getElementById('fileName');
+            const fileSize = document.getElementById('fileSize');
+            const filePages = document.getElementById('filePages');
+            const continueToStep2 = document.getElementById('continueToStep2');
+            const backToStep1 = document.getElementById('backToStep1');
+            const continueToStep3 = document.getElementById('continueToStep3');
+            const backToStep2 = document.getElementById('backToStep2');
+            const continueToStep4 = document.getElementById('continueToStep4');
+            const pagesPerDocumentInput = document.getElementById('pagesPerDocument');
+            const textPageNumberInput = document.getElementById('textPageNumber');
+            const pdfCanvas = document.getElementById('pdfCanvas');
+            const pdfCanvasContainer = document.getElementById('pdfCanvasContainer');
+            const selectionOverlay = document.getElementById('selectionOverlay');
+            const selectionInstructions = document.getElementById('selectionInstructions');
+            const extractedTextContainer = document.getElementById('extractedTextContainer');
+            const extractedText = document.getElementById('extractedText');
+            const filenamePattern = document.getElementById('filenamePattern');
+            const prevPageBtn = document.getElementById('prevPage');
+            const nextPageBtn = document.getElementById('nextPage');
+            const pageInfo = document.getElementById('pageInfo');
+            const zoomInBtn = document.getElementById('zoomIn');
+            const zoomOutBtn = document.getElementById('zoomOut');
+            const progressFill = document.getElementById('progressFill');
+            const progressText = document.getElementById('progressText');
+            const progressPercent = document.getElementById('progressPercent');
+            const processingSuccess = document.getElementById('processingSuccess');
+            const processingError = document.getElementById('processingError');
+            const resultFiles = document.getElementById('resultFiles');
+            const startOverBtn = document.getElementById('startOver');
+            const downloadZipBtn = document.getElementById('downloadZipBtn');
+
+            // Etapas
+            const step1 = document.getElementById('step1');
+            const step2 = document.getElementById('step2');
+            const step3 = document.getElementById('step3');
+            const step4 = document.getElementById('step4');
+            const step5 = document.getElementById('step5');
+
+            // Variáveis globais
+            let pdfDoc = null;
+            let pdfData = null;
+            let currentPage = 1;
+            let totalPages = 0;
+            let scale = 1.5;
+            let selectionActive = false;
+            let startX, startY, endX, endY;
+            let selectionCoordinates = null;
+            let canvasRect;
+            let processedFiles = [];
+            let pdfBlobs = {}; // Armazenar blobs de PDF por nome de arquivo
+            let zip = null;
+
+            // Verificar se as bibliotecas necessárias estão carregadas
+            if (typeof JSZip === 'undefined') {
+                console.error('JSZip não foi carregado corretamente!');
+                showError('Erro ao carregar bibliotecas necessárias. Por favor, recarregue a página.');
                 return;
             }
 
-            fileName.textContent = file.name;
-            fileSize.textContent = formatFileSize(file.size);
-            filePages.textContent = 'Carregando...';
-            fileInfo.classList.add('active');
-
-            const fileReader = new FileReader();
-            fileReader.onload = async function() {
-                try {
-                    // Armazenar os dados do PDF
-                    pdfData = new Uint8Array(fileReader.result);
-                    
-                    // Verificar se os dados são válidos
-                    if (pdfData.length < 10) {
-                        throw new Error("O arquivo PDF parece estar corrompido ou vazio");
-                    }
-                    
-                    // Carregar o PDF
-                    try {
-                        pdfDoc = await pdfjsLib.getDocument({data: pdfData}).promise;
-                        totalPages = pdfDoc.numPages;
-                        filePages.textContent = `${totalPages} páginas`;
-                        
-                        // Habilitar o botão de continuar
-                        continueToStep2.disabled = false;
-                        
-                        // Configurar valores máximos
-                        pagesPerDocumentInput.max = totalPages;
-                        validatePagesPerDocument();
-                    } catch (e) {
-                        console.error("Erro ao carregar PDF:", e);
-                        throw new Error("Não foi possível processar este PDF. Por favor, tente com outro arquivo.");
-                    }
-                } catch (error) {
-                    console.error('Erro ao carregar o PDF:', error);
-                    alert(error.message || 'Não foi possível carregar o PDF. Verifique se o arquivo é válido.');
-                    filePages.textContent = 'Erro ao carregar o arquivo';
-                    continueToStep2.disabled = true;
-                }
-            };
-            
-            fileReader.onerror = function() {
-                console.error('Erro ao ler o arquivo');
-                alert('Erro ao ler o arquivo. Por favor, tente novamente.');
-                filePages.textContent = '';
-                continueToStep2.disabled = true;
-            };
-            
-            fileReader.readAsArrayBuffer(file);
-        }
-
-        // Função para renderizar uma página do PDF
-        async function renderPdfPage(pageNumber) {
-            try {
-                // Atualizar informações da página
-                pageInfo.textContent = `Página ${pageNumber} de ${totalPages}`;
-                
-                // Habilitar/desabilitar botões de navegação
-                prevPageBtn.disabled = pageNumber <= 1;
-                nextPageBtn.disabled = pageNumber >= totalPages;
-                
-                // Obter a página
-                const page = await pdfDoc.getPage(pageNumber);
-                
-                // Calcular dimensões
-                const viewport = page.getViewport({ scale });
-                pdfCanvas.width = viewport.width;
-                pdfCanvas.height = viewport.height;
-                
-                // Renderizar a página
-                const renderContext = {
-                    canvasContext: pdfCanvas.getContext('2d'),
-                    viewport: viewport
-                };
-                
-                await page.render(renderContext).promise;
-                
-                // Atualizar o retângulo do canvas para seleção
-                canvasRect = pdfCanvas.getBoundingClientRect();
-                
-                // Limpar seleção anterior se estiver mudando de página
-                if (selectionCoordinates) {
-                    // Mostrar a seleção existente na nova página
-                    showSelectionOverlay(selectionCoordinates);
-                } else {
-                    clearSelection();
-                }
-            } catch (error) {
-                console.error('Erro ao renderizar página:', error);
-                alert('Erro ao renderizar a página do PDF.');
-            }
-        }
-
-        // Eventos para seleção de texto
-        pdfCanvasContainer.addEventListener('mousedown', startSelection);
-        pdfCanvasContainer.addEventListener('mousemove', updateSelection);
-        pdfCanvasContainer.addEventListener('mouseup', endSelection);
-        pdfCanvasContainer.addEventListener('mouseleave', () => {
-            if (selectionActive) {
-                endSelection();
-            }
-        });
-
-        // Função para iniciar a seleção
-        function startSelection(e) {
-            selectionActive = true;
-            
-            // Calcular posição relativa ao canvas
-            const rect = pdfCanvas.getBoundingClientRect();
-            startX = e.clientX - rect.left;
-            startY = e.clientY - rect.top;
-            
-            // Mostrar overlay
-            selectionOverlay.style.left = `${startX}px`;
-            selectionOverlay.style.top = `${startY}px`;
-            selectionOverlay.style.width = '0px';
-            selectionOverlay.style.height = '0px';
-            selectionOverlay.classList.remove('hidden');
-        }
-
-        // Função para atualizar a seleção
-        function updateSelection(e) {
-            if (!selectionActive) return;
-            
-            // Calcular posição relativa ao canvas
-            const rect = pdfCanvas.getBoundingClientRect();
-            endX = e.clientX - rect.left;
-            endY = e.clientY - rect.top;
-            
-            // Calcular dimensões
-            const width = Math.abs(endX - startX);
-            const height = Math.abs(endY - startY);
-            
-            // Calcular posição do canto superior esquerdo
-            const left = Math.min(startX, endX);
-            const top = Math.min(startY, endY);
-            
-            // Atualizar overlay
-            selectionOverlay.style.left = `${left}px`;
-            selectionOverlay.style.top = `${top}px`;
-            selectionOverlay.style.width = `${width}px`;
-            selectionOverlay.style.height = `${height}px`;
-        }
-
-        // Função para finalizar a seleção
-        async function endSelection() {
-            if (!selectionActive) return;
-            selectionActive = false;
-            
-            // Verificar se a seleção é válida
-            const width = Math.abs(endX - startX);
-            const height = Math.abs(endY - startY);
-            
-            if (width < 10 || height < 10) {
-                clearSelection();
+            if (typeof saveAs === 'undefined') {
+                console.error('FileSaver não foi carregado corretamente!');
+                showError('Erro ao carregar bibliotecas necessárias. Por favor, recarregue a página.');
                 return;
             }
-            
+
+            // Inicializar o JSZip
             try {
-                // Salvar coordenadas da seleção
-                selectionCoordinates = {
-                    left: Math.min(startX, endX) / scale,
-                    top: Math.min(startY, endY) / scale,
-                    right: Math.max(startX, endX) / scale,
-                    bottom: Math.max(startY, endY) / scale
-                };
-                
-                // Extrair texto da área selecionada
-                const extractedTextValue = await extractTextFromSelection(currentPage, selectionCoordinates);
-                
-                if (extractedTextValue) {
-                    document.getElementById('extractedText').textContent = extractedTextValue;
-                    extractedTextContainer.classList.remove('hidden');
-                    continueToStep4.disabled = false;
-                } else {
-                    alert('Nenhum texto foi encontrado na área selecionada. Por favor, tente novamente.');
-                    clearSelection();
-                }
-            } catch (error) {
-                console.error('Erro ao extrair texto:', error);
-                alert('Erro ao extrair texto da área selecionada.');
-                clearSelection();
-            }
-        }
-
-        // Função para extrair texto da seleção
-        async function extractTextFromSelection(pageNum, coordinates) {
-            try {
-                const page = await pdfDoc.getPage(pageNum);
-                const viewport = page.getViewport({ scale: 1.0 }); // Escala 1.0 para coordenadas reais
-                
-                // Inverter coordenadas Y (PDF tem origem no canto inferior esquerdo)
-                const pdfTop = viewport.height - coordinates.bottom;
-                const pdfBottom = viewport.height - coordinates.top;
-                
-                // Extrair texto
-                const textContent = await page.getTextContent();
-                let extractedText = '';
-                
-                for (const item of textContent.items) {
-                    const tx = item.transform[4];
-                    const ty = item.transform[5];
-                    
-                    // Verificar se o item está dentro da área selecionada
-                    if (tx >= coordinates.left && tx <= coordinates.right && ty >= pdfTop && ty <= pdfBottom) {
-                        extractedText += item.str + ' ';
-                    }
-                }
-                
-                return extractedText.trim();
-            } catch (error) {
-                console.error('Erro ao extrair texto:', error);
-                throw error;
-            }
-        }
-
-        // Função para mostrar a seleção existente
-        function showSelectionOverlay(coordinates) {
-            // Converter coordenadas do PDF para coordenadas do canvas
-            const left = coordinates.left * scale;
-            const top = coordinates.top * scale;
-            const width = (coordinates.right - coordinates.left) * scale;
-            const height = (coordinates.bottom - coordinates.top) * scale;
-            
-            // Atualizar overlay
-            selectionOverlay.style.left = `${left}px`;
-            selectionOverlay.style.top = `${top}px`;
-            selectionOverlay.style.width = `${width}px`;
-            selectionOverlay.style.height = `${height}px`;
-            selectionOverlay.classList.remove('hidden');
-        }
-
-        // Função para limpar a seleção
-        function clearSelection() {
-            selectionOverlay.classList.add('hidden');
-            selectionCoordinates = null;
-            continueToStep4.disabled = true;
-            extractedTextContainer.classList.add('hidden');
-        }
-
-        // Função para processar o PDF
-        async function processPdf() {
-            try {
-                // Obter configurações
-                const pagesPerDocument = parseInt(pagesPerDocumentInput.value);
-                const textPageOffset = parseInt(textPageNumberInput.value) - 1; // Converter para índice baseado em 0
-                
-                // Calcular número de documentos
-                const numDocuments = Math.ceil(totalPages / pagesPerDocument);
-                
-                // Resetar variáveis
-                processedFiles = [];
                 zip = new JSZip();
+                console.log('JSZip inicializado com sucesso');
+            } catch (error) {
+                console.error('Erro ao inicializar JSZip:', error);
+                showError('Erro ao inicializar componentes necessários. Por favor, recarregue a página.');
+                return;
+            }
+
+            // Evento de seleção de arquivo
+            pdfFileInput.addEventListener('change', handleFileSelect);
+
+            // Drag and drop para o upload de arquivo
+            const fileUpload = document.querySelector('.file-upload');
+            
+            fileUpload.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                fileUpload.style.borderColor = 'var(--primary)';
+                fileUpload.style.backgroundColor = 'rgba(67, 97, 238, 0.1)';
+            });
+            
+            fileUpload.addEventListener('dragleave', (e) => {
+                e.preventDefault();
+                fileUpload.style.borderColor = 'var(--border)';
+                fileUpload.style.backgroundColor = 'rgba(0, 0, 0, 0.01)';
+            });
+            
+            fileUpload.addEventListener('drop', (e) => {
+                e.preventDefault();
+                fileUpload.style.borderColor = 'var(--border)';
+                fileUpload.style.backgroundColor = 'rgba(0, 0, 0, 0.01)';
                 
-                // Processar cada documento
-                for (let docIndex = 0; docIndex < numDocuments; docIndex++) {
-                    // Calcular páginas para este documento
-                    const startPage = docIndex * pagesPerDocument + 1; // Página inicial (baseada em 1)
-                    const endPage = Math.min((docIndex + 1) * pagesPerDocument, totalPages); // Página final
+                if (e.dataTransfer.files.length > 0) {
+                    pdfFileInput.files = e.dataTransfer.files;
+                    handleFileSelect();
+                }
+            });
+
+            // Navegação entre etapas
+            continueToStep2.addEventListener('click', () => {
+                step1.classList.add('hidden');
+                step2.classList.remove('hidden');
+            });
+
+            backToStep1.addEventListener('click', () => {
+                step2.classList.add('hidden');
+                step1.classList.remove('hidden');
+            });
+
+            continueToStep3.addEventListener('click', () => {
+                const pagesPerDocument = parseInt(pagesPerDocumentInput.value);
+                const textPageNumber = parseInt(textPageNumberInput.value);
+                
+                if (isNaN(pagesPerDocument) || pagesPerDocument < 1) {
+                    alert('Por favor, insira um número válido de páginas por documento.');
+                    return;
+                }
+                
+                if (isNaN(textPageNumber) || textPageNumber < 1 || textPageNumber > pagesPerDocument) {
+                    alert(`Por favor, insira um número de página válido entre 1 e ${pagesPerDocument}.`);
+                    return;
+                }
+                
+                step2.classList.add('hidden');
+                step3.classList.remove('hidden');
+                
+                // Calcular a primeira página do primeiro documento
+                const firstDocPage = 1 + (textPageNumber - 1);
+                currentPage = firstDocPage;
+                
+                renderPdfPage(currentPage);
+            });
+
+            backToStep2.addEventListener('click', () => {
+                step3.classList.add('hidden');
+                step2.classList.remove('hidden');
+            });
+
+            continueToStep4.addEventListener('click', () => {
+                step3.classList.add('hidden');
+                step4.classList.remove('hidden');
+                processPdf();
+            });
+
+            startOverBtn.addEventListener('click', () => {
+                resetApp();
+                step5.classList.add('hidden');
+                step1.classList.remove('hidden');
+            });
+
+            // Navegação do PDF
+            prevPageBtn.addEventListener('click', () => {
+                if (currentPage > 1) {
+                    currentPage--;
+                    renderPdfPage(currentPage);
+                }
+            });
+
+            nextPageBtn.addEventListener('click', () => {
+                if (currentPage < totalPages) {
+                    currentPage++;
+                    renderPdfPage(currentPage);
+                }
+            });
+
+            // Zoom do PDF
+            zoomInBtn.addEventListener('click', () => {
+                scale += 0.25;
+                renderPdfPage(currentPage);
+            });
+
+            zoomOutBtn.addEventListener('click', () => {
+                if (scale > 0.5) {
+                    scale -= 0.25;
+                    renderPdfPage(currentPage);
+                }
+            });
+
+            // Download do ZIP
+            document.getElementById('downloadZip').addEventListener('click', downloadZip);
+
+            // Validação de inputs numéricos
+            pagesPerDocumentInput.addEventListener('input', validatePagesPerDocument);
+            textPageNumberInput.addEventListener('input', validateTextPageNumber);
+
+            function validatePagesPerDocument() {
+                const pagesPerDocument = parseInt(pagesPerDocumentInput.value);
+                if (isNaN(pagesPerDocument) || pagesPerDocument < 1) {
+                    pagesPerDocumentInput.setCustomValidity('Insira um número válido maior que 0');
+                } else if (pagesPerDocument > totalPages) {
+                    pagesPerDocumentInput.setCustomValidity(`O valor não pode ser maior que o total de páginas (${totalPages})`);
+                } else {
+                    pagesPerDocumentInput.setCustomValidity('');
                     
-                    // Calcular a página onde está o texto para extração
-                    const textPage = startPage + textPageOffset;
-                    
-                    // Verificar se a página de texto está dentro do intervalo válido
-                    if (textPage > endPage) {
-                        throw new Error(`A página de texto (${textPage}) está fora do intervalo válido para o documento ${docIndex + 1} (${startPage}-${endPage}).`);
-                    }
-                    
-                    // Atualizar progresso
-                    const progress = Math.round((docIndex / numDocuments) * 50);
-                    progressFill.style.width = `${progress}%`;
-                    progressText.textContent = `Extraindo texto do documento ${docIndex + 1}/${numDocuments}`;
-                    progressPercent.textContent = `${progress}%`;
-                    
-                    // Permitir que a UI atualize
-                    await new Promise(resolve => setTimeout(resolve, 10));
-                    
-                    // Extrair texto para o nome do arquivo
-                    let docName = '';
+                    // Atualizar o valor máximo para o campo de página de texto
+                    textPageNumberInput.max = pagesPerDocument;
+                    validateTextPageNumber();
+                }
+            }
+
+            function validateTextPageNumber() {
+                const pagesPerDocument = parseInt(pagesPerDocumentInput.value);
+                const textPageNumber = parseInt(textPageNumberInput.value);
+                
+                if (isNaN(textPageNumber) || textPageNumber < 1) {
+                    textPageNumberInput.setCustomValidity('Insira um número válido maior que 0');
+                } else if (textPageNumber > pagesPerDocument) {
+                    textPageNumberInput.setCustomValidity(`O valor não pode ser maior que o número de páginas por documento (${pagesPerDocument})`);
+                } else {
+                    textPageNumberInput.setCustomValidity('');
+                }
+            }
+
+            // Função para lidar com a seleção de arquivo
+            function handleFileSelect() {
+                if (pdfFileInput.files.length === 0) {
+                    return;
+                }
+
+                const file = pdfFileInput.files[0];
+                if (file.type !== 'application/pdf') {
+                    alert('Por favor, selecione um arquivo PDF válido.');
+                    return;
+                }
+
+                fileName.textContent = file.name;
+                fileSize.textContent = formatFileSize(file.size);
+                filePages.textContent = 'Carregando...';
+                fileInfo.classList.add('active');
+
+                const fileReader = new FileReader();
+                fileReader.onload = async function() {
                     try {
-                        docName = await extractTextFromSelection(textPage, selectionCoordinates);
-                        if (!docName) {
-                            docName = `documento_${docIndex + 1}`;
+                        // Armazenar os dados do PDF
+                        pdfData = new Uint8Array(fileReader.result);
+                        
+                        // Verificar se os dados são válidos
+                        if (pdfData.length < 10) {
+                            throw new Error("O arquivo PDF parece estar corrompido ou vazio");
+                        }
+                        
+                        // Carregar o PDF
+                        try {
+                            pdfDoc = await pdfjsLib.getDocument({data: pdfData}).promise;
+                            totalPages = pdfDoc.numPages;
+                            filePages.textContent = `${totalPages} páginas`;
+                            
+                            // Habilitar o botão de continuar
+                            continueToStep2.disabled = false;
+                            
+                            // Configurar valores máximos
+                            pagesPerDocumentInput.max = totalPages;
+                            validatePagesPerDocument();
+                        } catch (e) {
+                            console.error("Erro ao carregar PDF:", e);
+                            throw new Error("Não foi possível processar este PDF. Por favor, tente com outro arquivo.");
                         }
                     } catch (error) {
-                        console.warn(`Erro ao extrair texto para o documento ${docIndex + 1}:`, error);
-                        docName = `documento_${docIndex + 1}`;
+                        console.error('Erro ao carregar o PDF:', error);
+                        alert(error.message || 'Não foi possível carregar o PDF. Verifique se o arquivo é válido.');
+                        filePages.textContent = 'Erro ao carregar o arquivo';
+                        continueToStep2.disabled = true;
+                    }
+                };
+                
+                fileReader.onerror = function() {
+                    console.error('Erro ao ler o arquivo');
+                    alert('Erro ao ler o arquivo. Por favor, tente novamente.');
+                    filePages.textContent = '';
+                    continueToStep2.disabled = true;
+                };
+                
+                fileReader.readAsArrayBuffer(file);
+            }
+
+            // Função para renderizar uma página do PDF
+            async function renderPdfPage(pageNumber) {
+                try {
+                    // Atualizar informações da página
+                    pageInfo.textContent = `Página ${pageNumber} de ${totalPages}`;
+                    
+                    // Habilitar/desabilitar botões de navegação
+                    prevPageBtn.disabled = pageNumber <= 1;
+                    nextPageBtn.disabled = pageNumber >= totalPages;
+                    
+                    // Obter a página
+                    const page = await pdfDoc.getPage(pageNumber);
+                    
+                    // Calcular dimensões
+                    const viewport = page.getViewport({ scale });
+                    pdfCanvas.width = viewport.width;
+                    pdfCanvas.height = viewport.height;
+                    
+                    // Renderizar a página
+                    const renderContext = {
+                        canvasContext: pdfCanvas.getContext('2d'),
+                        viewport: viewport
+                    };
+                    
+                    await page.render(renderContext).promise;
+                    
+                    // Atualizar o retângulo do canvas para seleção
+                    canvasRect = pdfCanvas.getBoundingClientRect();
+                    
+                    // Limpar seleção anterior se estiver mudando de página
+                    if (selectionCoordinates) {
+                        // Mostrar a seleção existente na nova página
+                        showSelectionOverlay(selectionCoordinates);
+                    } else {
+                        clearSelection();
+                    }
+                } catch (error) {
+                    console.error('Erro ao renderizar página:', error);
+                    alert('Erro ao renderizar a página do PDF.');
+                }
+            }
+
+            // Eventos para seleção de texto
+            pdfCanvasContainer.addEventListener('mousedown', startSelection);
+            pdfCanvasContainer.addEventListener('mousemove', updateSelection);
+            pdfCanvasContainer.addEventListener('mouseup', endSelection);
+            pdfCanvasContainer.addEventListener('mouseleave', () => {
+                if (selectionActive) {
+                    endSelection();
+                }
+            });
+
+            // Função para iniciar a seleção
+            function startSelection(e) {
+                selectionActive = true;
+                
+                // Calcular posição relativa ao canvas
+                const rect = pdfCanvas.getBoundingClientRect();
+                startX = e.clientX - rect.left;
+                startY = e.clientY - rect.top;
+                
+                // Mostrar overlay
+                selectionOverlay.style.left = `${startX}px`;
+                selectionOverlay.style.top = `${startY}px`;
+                selectionOverlay.style.width = '0px';
+                selectionOverlay.style.height = '0px';
+                selectionOverlay.classList.remove('hidden');
+            }
+
+            // Função para atualizar a seleção
+            function updateSelection(e) {
+                if (!selectionActive) return;
+                
+                // Calcular posição relativa ao canvas
+                const rect = pdfCanvas.getBoundingClientRect();
+                endX = e.clientX - rect.left;
+                endY = e.clientY - rect.top;
+                
+                // Calcular dimensões
+                const width = Math.abs(endX - startX);
+                const height = Math.abs(endY - startY);
+                
+                // Calcular posição do canto superior esquerdo
+                const left = Math.min(startX, endX);
+                const top = Math.min(startY, endY);
+                
+                // Atualizar overlay
+                selectionOverlay.style.left = `${left}px`;
+                selectionOverlay.style.top = `${top}px`;
+                selectionOverlay.style.width = `${width}px`;
+                selectionOverlay.style.height = `${height}px`;
+            }
+
+            // Função para finalizar a seleção
+            async function endSelection() {
+                if (!selectionActive) return;
+                selectionActive = false;
+                
+                // Verificar se a seleção é válida
+                const width = Math.abs(endX - startX);
+                const height = Math.abs(endY - startY);
+                
+                if (width < 10 || height < 10) {
+                    clearSelection();
+                    return;
+                }
+                
+                try {
+                    // Salvar coordenadas da seleção
+                    selectionCoordinates = {
+                        left: Math.min(startX, endX) / scale,
+                        top: Math.min(startY, endY) / scale,
+                        right: Math.max(startX, endX) / scale,
+                        bottom: Math.max(startY, endY) / scale
+                    };
+                    
+                    // Extrair texto da área selecionada
+                    const extractedTextValue = await extractTextFromSelection(currentPage, selectionCoordinates);
+                    
+                    if (extractedTextValue) {
+                        document.getElementById('extractedText').textContent = extractedTextValue;
+                        extractedTextContainer.classList.remove('hidden');
+                        continueToStep4.disabled = false;
+                    } else {
+                        alert('Nenhum texto foi encontrado na área selecionada. Por favor, tente novamente.');
+                        clearSelection();
+                    }
+                } catch (error) {
+                    console.error('Erro ao extrair texto:', error);
+                    alert('Erro ao extrair texto da área selecionada.');
+                    clearSelection();
+                }
+            }
+
+            // Função para extrair texto da seleção
+            async function extractTextFromSelection(pageNum, coordinates) {
+                try {
+                    const page = await pdfDoc.getPage(pageNum);
+                    const viewport = page.getViewport({ scale: 1.0 }); // Escala 1.0 para coordenadas reais
+                    
+                    // Inverter coordenadas Y (PDF tem origem no canto inferior esquerdo)
+                    const pdfTop = viewport.height - coordinates.bottom;
+                    const pdfBottom = viewport.height - coordinates.top;
+                    
+                    // Extrair texto
+                    const textContent = await page.getTextContent();
+                    let extractedText = '';
+                    
+                    for (const item of textContent.items) {
+                        const tx = item.transform[4];
+                        const ty = item.transform[5];
+                        
+                        // Verificar se o item está dentro da área selecionada
+                        if (tx >= coordinates.left && tx <= coordinates.right && ty >= pdfTop && ty <= pdfBottom) {
+                            extractedText += item.str + ' ';
+                        }
                     }
                     
-                    // Limpar o nome do documento para uso em nome de arquivo
-                    docName = sanitizeFilename(docName);
+                    return extractedText.trim();
+                } catch (error) {
+                    console.error('Erro ao extrair texto:', error);
+                    throw error;
+                }
+            }
+
+            // Função para mostrar a seleção existente
+            function showSelectionOverlay(coordinates) {
+                // Converter coordenadas do PDF para coordenadas do canvas
+                const left = coordinates.left * scale;
+                const top = coordinates.top * scale;
+                const width = (coordinates.right - coordinates.left) * scale;
+                const height = (coordinates.bottom - coordinates.top) * scale;
+                
+                // Atualizar overlay
+                selectionOverlay.style.left = `${left}px`;
+                selectionOverlay.style.top = `${top}px`;
+                selectionOverlay.style.width = `${width}px`;
+                selectionOverlay.style.height = `${height}px`;
+                selectionOverlay.classList.remove('hidden');
+            }
+
+            // Função para limpar a seleção
+            function clearSelection() {
+                selectionOverlay.classList.add('hidden');
+                selectionCoordinates = null;
+                continueToStep4.disabled = true;
+                extractedTextContainer.classList.add('hidden');
+            }
+
+            // Função para processar o PDF
+            async function processPdf() {
+                try {
+                    console.log('Iniciando processamento do PDF...');
                     
-                    // Processar cada página do documento
-                    for (let pageNum = startPage; pageNum <= endPage; pageNum++) {
+                    // Obter configurações
+                    const pagesPerDocument = parseInt(pagesPerDocumentInput.value);
+                    const textPageOffset = parseInt(textPageNumberInput.value) - 1; // Converter para índice baseado em 0
+                    
+                    // Calcular número de documentos
+                    const numDocuments = Math.ceil(totalPages / pagesPerDocument);
+                    console.log(`Total de páginas: ${totalPages}, Páginas por documento: ${pagesPerDocument}, Total de documentos: ${numDocuments}`);
+                    
+                    // Resetar variáveis
+                    processedFiles = [];
+                    pdfBlobs = {};
+                    zip = new JSZip();
+                    
+                    // Processar cada documento
+                    for (let docIndex = 0; docIndex < numDocuments; docIndex++) {
+                        // Calcular páginas para este documento
+                        const startPage = docIndex * pagesPerDocument + 1; // Página inicial (baseada em 1)
+                        const endPage = Math.min((docIndex + 1) * pagesPerDocument, totalPages); // Página final
+                        
+                        // Calcular a página onde está o texto para extração
+                        const textPage = startPage + textPageOffset;
+                        
+                        // Verificar se a página de texto está dentro do intervalo válido
+                        if (textPage > endPage) {
+                            throw new Error(`A página de texto (${textPage}) está fora do intervalo válido para o documento ${docIndex + 1} (${startPage}-${endPage}).`);
+                        }
+                        
                         // Atualizar progresso
-                        const pageProgress = 50 + Math.round(((pageNum - startPage) / (endPage - startPage + 1) + docIndex) / numDocuments * 50);
-                        progressFill.style.width = `${pageProgress}%`;
-                        progressText.textContent = `Processando página ${pageNum} do documento ${docIndex + 1}`;
-                        progressPercent.textContent = `${pageProgress}%`;
+                        const progress = Math.round((docIndex / numDocuments) * 50);
+                        progressFill.style.width = `${progress}%`;
+                        progressText.textContent = `Extraindo texto do documento ${docIndex + 1}/${numDocuments}`;
+                        progressPercent.textContent = `${progress}%`;
                         
                         // Permitir que a UI atualize
                         await new Promise(resolve => setTimeout(resolve, 10));
                         
+                        // Extrair texto para o nome do arquivo
+                        let docName = '';
                         try {
-                            // Criar PDF de página única
-                            const pdfBytes = await createSinglePagePdf(pageNum);
-                            
-                            // Gerar nome do arquivo
-                            const pageInDoc = pageNum - startPage + 1;
-                            const fileName = generateFileName(docName, pageInDoc);
-                            
-                            // Adicionar ao ZIP
-                            zip.file(`${fileName}.pdf`, pdfBytes);
-                            
-                            processedFiles.push({
-                                docIndex: docIndex + 1,
-                                pageNum,
-                                pageInDoc,
-                                fileName,
-                                docName
-                            });
+                            docName = await extractTextFromSelection(textPage, selectionCoordinates);
+                            if (!docName) {
+                                docName = `documento_${docIndex + 1}`;
+                            }
                         } catch (error) {
-                            console.error(`Erro ao processar página ${pageNum}:`, error);
-                            throw new Error(`Erro ao processar página ${pageNum}: ${error.message}`);
+                            console.warn(`Erro ao extrair texto para o documento ${docIndex + 1}:`, error);
+                            docName = `documento_${docIndex + 1}`;
+                        }
+                        
+                        // Limpar o nome do documento para uso em nome de arquivo
+                        docName = sanitizeFilename(docName);
+                        
+                        // Processar cada página do documento
+                        for (let pageNum = startPage; pageNum <= endPage; pageNum++) {
+                            // Atualizar progresso
+                            const pageProgress = 50 + Math.round(((pageNum - startPage) / (endPage - startPage + 1) + docIndex) / numDocuments * 50);
+                            progressFill.style.width = `${pageProgress}%`;
+                            progressText.textContent = `Processando página ${pageNum} do documento ${docIndex + 1}`;
+                            progressPercent.textContent = `${pageProgress}%`;
+                            
+                            // Permitir que a UI atualize
+                            await new Promise(resolve => setTimeout(resolve, 10));
+                            
+                            try {
+                                // Criar PDF de página única
+                                const pdfBytes = await createSinglePagePdf(pageNum);
+                                
+                                // Gerar nome do arquivo
+                                const pageInDoc = pageNum - startPage + 1;
+                                const fileName = generateFileName(docName, pageInDoc);
+                                
+                                // Adicionar ao ZIP
+                                zip.file(`${fileName}.pdf`, pdfBytes);
+                                
+                                // Armazenar o blob para download individual
+                                const pdfBlob = new Blob([pdfBytes], { type: 'application/pdf' });
+                                pdfBlobs[`${fileName}.pdf`] = pdfBlob;
+                                
+                                processedFiles.push({
+                                    docIndex: docIndex + 1,
+                                    pageNum,
+                                    pageInDoc,
+                                    fileName,
+                                    docName
+                                });
+                            } catch (error) {
+                                console.error(`Erro ao processar página ${pageNum}:`, error);
+                                throw new Error(`Erro ao processar página ${pageNum}: ${error.message}`);
+                            }
                         }
                     }
+                    
+                    // Finalizar progresso
+                    progressFill.style.width = '100%';
+                    progressText.textContent = 'Processamento concluído!';
+                    progressPercent.textContent = '100%';
+                    
+                    // Mostrar resultados
+                    displayResults();
+                    
+                    // Avançar para a etapa de download
+                    setTimeout(() => {
+                        step4.classList.add('hidden');
+                        step5.classList.remove('hidden');
+                    }, 500);
+                } catch (error) {
+                    console.error('Erro ao processar PDF:', error);
+                    processingSuccess.classList.add('hidden');
+                    processingError.classList.remove('hidden');
+                    processingError.textContent = `Erro: ${error.message}`;
+                    
+                    // Avançar para a etapa de download mesmo com erro
+                    setTimeout(() => {
+                        step4.classList.add('hidden');
+                        step5.classList.remove('hidden');
+                    }, 500);
                 }
-                
-                // Finalizar progresso
-                progressFill.style.width = '100%';
-                progressText.textContent = 'Processamento concluído!';
-                progressPercent.textContent = '100%';
-                
-                // Mostrar resultados
-                displayResults();
-                
-                // Avançar para a etapa de download
-                setTimeout(() => {
-                    step4.classList.add('hidden');
-                    step5.classList.remove('hidden');
-                }, 500);
-            } catch (error) {
-                console.error('Erro ao processar PDF:', error);
-                processingSuccess.classList.add('hidden');
-                processingError.classList.remove('hidden');
-                processingError.textContent = `Erro: ${error.message}`;
-                
-                // Avançar para a etapa de download mesmo com erro
-                setTimeout(() => {
-                    step4.classList.add('hidden');
-                    step5.classList.remove('hidden');
-                }, 500);
             }
-        }
 
-        // Função para criar PDF de página única
-        async function createSinglePagePdf(pageNum) {
-            try {
-                // Criar um novo PDF com apenas uma página
-                const { PDFDocument } = PDFLib;
-                
-                // Verificar se os dados do PDF são válidos
-                if (!pdfData || pdfData.length === 0) {
-                    throw new Error("Dados do PDF inválidos ou vazios");
-                }
-                
-                // Carregar o PDF original
-                let originalPdfDoc;
+            // Função para criar PDF de página única
+            async function createSinglePagePdf(pageNum) {
                 try {
-                    originalPdfDoc = await PDFDocument.load(pdfData.buffer || pdfData);
-                } catch (e) {
-                    console.error("Erro ao carregar PDF original:", e);
+                    // Criar um novo PDF com apenas uma página
+                    const { PDFDocument } = PDFLib;
                     
-                    // Tentar abordagem alternativa
-                    const arrayBuffer = pdfData.buffer || pdfData;
-                    const blob = new Blob([arrayBuffer], { type: 'application/pdf' });
-                    const reader = new FileReader();
+                    // Verificar se os dados do PDF são válidos
+                    if (!pdfData || pdfData.length === 0) {
+                        throw new Error("Dados do PDF inválidos ou vazios");
+                    }
                     
-                    // Usar Promise para FileReader
-                    const pdfBytes = await new Promise((resolve, reject) => {
-                        reader.onload = () => resolve(reader.result);
-                        reader.onerror = reject;
-                        reader.readAsArrayBuffer(blob);
+                    // Carregar o PDF original
+                    let originalPdfDoc;
+                    try {
+                        originalPdfDoc = await PDFDocument.load(pdfData.buffer || pdfData);
+                    } catch (e) {
+                        console.error("Erro ao carregar PDF original:", e);
+                        
+                        // Tentar abordagem alternativa
+                        const arrayBuffer = pdfData.buffer || pdfData;
+                        const blob = new Blob([arrayBuffer], { type: 'application/pdf' });
+                        const reader = new FileReader();
+                        
+                        // Usar Promise para FileReader
+                        const pdfBytes = await new Promise((resolve, reject) => {
+                            reader.onload = () => resolve(reader.result);
+                            reader.onerror = reject;
+                            reader.readAsArrayBuffer(blob);
+                        });
+                        
+                        originalPdfDoc = await PDFDocument.load(pdfBytes);
+                    }
+                    
+                    // Criar novo documento
+                    const newPdfDoc = await PDFDocument.create();
+                    
+                    // Copiar a página do PDF original
+                    const [copiedPage] = await newPdfDoc.copyPages(originalPdfDoc, [pageNum - 1]);
+                    newPdfDoc.addPage(copiedPage);
+                    
+                    // Salvar o novo PDF
+                    const pdfBytes = await newPdfDoc.save();
+                    return pdfBytes;
+                } catch (error) {
+                    console.error("Erro ao criar PDF de página única:", error);
+                    throw error;
+                }
+            }
+
+            // Função para gerar nome de arquivo
+            function generateFileName(docName, pageInDoc) {
+                let pattern = filenamePattern.value || '{text}_pagina{page}';
+                
+                // Substituir placeholders
+                let fileName = pattern
+                    .replace('{text}', docName)
+                    .replace('{page}', pageInDoc);
+                
+                return fileName;
+            }
+
+            // Função para limpar nome de arquivo
+            function sanitizeFilename(name) {
+                // Remover caracteres inválidos para nome de arquivo
+                return name.replace(/[<>:"/\\|?*]/g, '_')
+                          .replace(/\s+/g, '_')
+                          .substring(0, 100); // Limitar tamanho
+            }
+
+            // Função para exibir resultados
+            function displayResults() {
+                resultFiles.innerHTML = '';
+                
+                // Agrupar arquivos por documento
+                const docGroups = {};
+                
+                processedFiles.forEach(file => {
+                    if (!docGroups[file.docIndex]) {
+                        docGroups[file.docIndex] = [];
+                    }
+                    docGroups[file.docIndex].push(file);
+                });
+                
+                // Exibir arquivos agrupados por documento
+                Object.keys(docGroups).forEach(docIndex => {
+                    const files = docGroups[docIndex];
+                    const docName = files[0].docName;
+                    
+                    // Criar cabeçalho do documento
+                    const docHeader = document.createElement('div');
+                    docHeader.className = 'alert alert-info';
+                    docHeader.style.marginTop = '1rem';
+                    docHeader.style.marginBottom = '0.5rem';
+                    docHeader.textContent = `Documento ${docIndex}: ${docName}`;
+                    resultFiles.appendChild(docHeader);
+                    
+                    // Listar arquivos do documento
+                    files.forEach(file => {
+                        const fileElement = document.createElement('div');
+                        fileElement.className = 'result-file';
+                        
+                        // Adicionar link de download individual
+                        const downloadLink = document.createElement('a');
+                        downloadLink.className = 'download-individual';
+                        downloadLink.textContent = 'Baixar';
+                        downloadLink.href = '#';
+                        downloadLink.addEventListener('click', (e) => {
+                            e.preventDefault();
+                            downloadSingleFile(`${file.fileName}.pdf`);
+                        });
+                        
+                        fileElement.innerHTML = `
+                            <span class="result-file-name">${file.fileName}.pdf</span>
+                            <span class="result-file-pages">Página ${file.pageInDoc} de ${files.length}</span>
+                        `;
+                        
+                        fileElement.appendChild(downloadLink);
+                        resultFiles.appendChild(fileElement);
+                    });
+                });
+            }
+
+            // Função para baixar um único arquivo
+            function downloadSingleFile(fileName) {
+                try {
+                    console.log(`Iniciando download do arquivo: ${fileName}`);
+                    if (pdfBlobs[fileName]) {
+                        saveAs(pdfBlobs[fileName], fileName);
+                    } else {
+                        console.error(`Arquivo não encontrado: ${fileName}`);
+                        alert(`Erro: Arquivo ${fileName} não encontrado.`);
+                    }
+                } catch (error) {
+                    console.error('Erro ao baixar arquivo individual:', error);
+                    alert('Erro ao baixar o arquivo. Por favor, tente novamente.');
+                }
+            }
+
+            // Função para baixar o ZIP
+            async function downloadZip() {
+                try {
+                    console.log('Iniciando geração do arquivo ZIP...');
+                    
+                    // Verificar se há arquivos para baixar
+                    if (processedFiles.length === 0) {
+                        alert('Não há arquivos para baixar.');
+                        return;
+                    }
+                    
+                    // Gerar o arquivo ZIP
+                    const zipBlob = await zip.generateAsync({
+                        type: 'blob',
+                        compression: 'DEFLATE',
+                        compressionOptions: { level: 6 }
                     });
                     
-                    originalPdfDoc = await PDFDocument.load(pdfBytes);
+                    console.log('Arquivo ZIP gerado com sucesso. Tamanho:', formatFileSize(zipBlob.size));
+                    
+                    // Obter nome do arquivo original
+                    const originalFileName = pdfFileInput.files[0].name.replace('.pdf', '');
+                    
+                    // Baixar o arquivo ZIP usando FileSaver
+                    console.log('Iniciando download do ZIP...');
+                    saveAs(zipBlob, `${originalFileName}_renomeado.zip`);
+                    console.log('Download iniciado com sucesso!');
+                } catch (error) {
+                    console.error('Erro ao gerar ou baixar arquivo ZIP:', error);
+                    alert('Erro ao gerar arquivo ZIP. Por favor, tente novamente.');
                 }
-                
-                // Criar novo documento
-                const newPdfDoc = await PDFDocument.create();
-                
-                // Copiar a página do PDF original
-                const [copiedPage] = await newPdfDoc.copyPages(originalPdfDoc, [pageNum - 1]);
-                newPdfDoc.addPage(copiedPage);
-                
-                // Salvar o novo PDF
-                const pdfBytes = await newPdfDoc.save();
-                return pdfBytes;
-            } catch (error) {
-                console.error("Erro ao criar PDF de página única:", error);
-                throw error;
             }
-        }
 
-        // Função para gerar nome de arquivo
-        function generateFileName(docName, pageInDoc) {
-            let pattern = filenamePattern.value || '{text}_pagina{page}';
-            
-            // Substituir placeholders
-            let fileName = pattern
-                .replace('{text}', docName)
-                .replace('{page}', pageInDoc);
-            
-            return fileName;
-        }
-
-        // Função para limpar nome de arquivo
-        function sanitizeFilename(name) {
-            // Remover caracteres inválidos para nome de arquivo
-            return name.replace(/[<>:"/\\|?*]/g, '_')
-                      .replace(/\s+/g, '_')
-                      .substring(0, 100); // Limitar tamanho
-        }
-
-        // Função para exibir resultados
-        function displayResults() {
-            resultFiles.innerHTML = '';
-            
-            // Agrupar arquivos por documento
-            const docGroups = {};
-            
-            processedFiles.forEach(file => {
-                if (!docGroups[file.docIndex]) {
-                    docGroups[file.docIndex] = [];
-                }
-                docGroups[file.docIndex].push(file);
-            });
-            
-            // Exibir arquivos agrupados por documento
-            Object.keys(docGroups).forEach(docIndex => {
-                const files = docGroups[docIndex];
-                const docName = files[0].docName;
+            // Função para formatar o tamanho do arquivo
+            function formatFileSize(bytes) {
+                if (bytes === 0) return '0 Bytes';
                 
-                // Criar cabeçalho do documento
-                const docHeader = document.createElement('div');
-                docHeader.className = 'alert alert-info';
-                docHeader.style.marginTop = '1rem';
-                docHeader.style.marginBottom = '0.5rem';
-                docHeader.textContent = `Documento ${docIndex}: ${docName}`;
-                resultFiles.appendChild(docHeader);
+                const k = 1024;
+                const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+                const i = Math.floor(Math.log(bytes) / Math.log(k));
                 
-                // Listar arquivos do documento
-                files.forEach(file => {
-                    const fileElement = document.createElement('div');
-                    fileElement.className = 'result-file';
-                    fileElement.innerHTML = `
-                        <span class="result-file-name">${file.fileName}.pdf</span>
-                        <span class="result-file-pages">Página ${file.pageInDoc} de ${files.length}</span>
-                    `;
-                    resultFiles.appendChild(fileElement);
-                });
-            });
-        }
-
-        // Função para baixar o ZIP
-        async function downloadZip() {
-            try {
-                // Gerar o arquivo ZIP
-                const zipBlob = await zip.generateAsync({type: 'blob'});
-                
-                // Obter nome do arquivo original
-                const originalFileName = pdfFileInput.files[0].name.replace('.pdf', '');
-                
-                // Baixar o arquivo ZIP
-                saveAs(zipBlob, `${originalFileName}_renomeado.zip`);
-            } catch (error) {
-                console.error('Erro ao gerar arquivo ZIP:', error);
-                alert('Erro ao gerar arquivo ZIP. Por favor, tente novamente.');
+                return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
             }
-        }
 
-        // Função para formatar o tamanho do arquivo
-        function formatFileSize(bytes) {
-            if (bytes === 0) return '0 Bytes';
-            
-            const k = 1024;
-            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-            const i = Math.floor(Math.log(bytes) / Math.log(k));
-            
-            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-        }
+            // Função para mostrar erro
+            function showError(message) {
+                alert(message);
+            }
 
-        // Função para resetar o aplicativo
-        function resetApp() {
-            // Resetar variáveis
-            pdfDoc = null;
-            pdfData = null;
-            currentPage = 1;
-            totalPages = 0;
-            scale = 1.5;
-            selectionCoordinates = null;
-            processedFiles = [];
-            zip = new JSZip();
-            
-            // Resetar interface
-            pdfFileInput.value = '';
-            fileInfo.classList.remove('active');
-            fileName.textContent = '-';
-            fileSize.textContent = '-';
-            filePages.textContent = '-';
-            continueToStep2.disabled = true;
-            
-            // Resetar campos
-            pagesPerDocumentInput.value = '1';
-            textPageNumberInput.value = '1';
-            filenamePattern.value = '{text}_pagina{page}';
-            
-            // Limpar canvas
-            const ctx = pdfCanvas.getContext('2d');
-            ctx.clearRect(0, 0, pdfCanvas.width, pdfCanvas.height);
-            
-            // Resetar seleção
-            clearSelection();
-            
-            // Resetar progresso
-            progressFill.style.width = '0%';
-            progressText.textContent = 'Preparando...';
-            progressPercent.textContent = '0%';
-            
-            // Resetar resultados
-            processingSuccess.classList.remove('hidden');
-            processingError.classList.add('hidden');
-            resultFiles.innerHTML = '';
+            // Função para resetar o aplicativo
+            function resetApp() {
+                // Resetar variáveis
+                pdfDoc = null;
+                pdfData = null;
+                currentPage = 1;
+                totalPages = 0;
+                scale = 1.5;
+                selectionCoordinates = null;
+                processedFiles = [];
+                pdfBlobs = {};
+                zip = new JSZip();
+                
+                // Resetar interface
+                pdfFileInput.value = '';
+                fileInfo.classList.remove('active');
+                fileName.textContent = '-';
+                fileSize.textContent = '-';
+                filePages.textContent = '-';
+                continueToStep2.disabled = true;
+                
+                // Resetar campos
+                pagesPerDocumentInput.value = '1';
+                textPageNumberInput.value = '1';
+                filenamePattern.value = '{text}_pagina{page}';
+                
+                // Limpar canvas
+                const ctx = pdfCanvas.getContext('2d');
+                ctx.clearRect(0, 0, pdfCanvas.width, pdfCanvas.height);
+                
+                // Resetar seleção
+                clearSelection();
+                
+                // Resetar progresso
+                progressFill.style.width = '0%';
+                progressText.textContent = 'Preparando...';
+                progressPercent.textContent = '0%';
+                
+                // Resetar resultados
+                processingSuccess.classList.remove('hidden');
+                processingError.classList.add('hidden');
+                resultFiles.innerHTML = '';
+            }
+
+            console.log('Aplicação inicializada com sucesso!');
         }
     </script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9516032153d1f237',t:'MTc1MDE5OTY0NC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'95162e2f906c6e30',t:'MTc1MDIwMTQwOC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
