@@ -5,7 +5,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Extrator de PDF</title>
+    <title>Renomeador de PDF</title>
     <script src="https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.4.120/build/pdf.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
@@ -272,13 +272,16 @@
         .pdf-canvas {
             background-color: white;
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+            position: relative;
         }
         
+        /* Melhorias na seleção */
         .selection-overlay {
             position: absolute;
             border: 2px dashed var(--primary);
             background-color: rgba(67, 97, 238, 0.2);
             pointer-events: none;
+            z-index: 10;
         }
         
         .selection-overlay.hidden {
@@ -292,6 +295,24 @@
             color: var(--white);
             border-radius: 4px;
             font-size: 14px;
+        }
+        
+        /* Novo estilo para o cursor de seleção */
+        .selection-active {
+            cursor: crosshair !important;
+        }
+        
+        /* Estilo para destacar a área selecionável */
+        .selection-highlight {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            border: 2px solid var(--primary);
+            pointer-events: none;
+            z-index: 5;
+            display: none;
         }
         
         .extracted-text-container {
@@ -410,6 +431,23 @@
         .hidden {
             display: none;
         }
+        
+        /* Novo estilo para o botão de redefinir seleção */
+        .reset-selection-button {
+            margin-top: 10px;
+            background-color: var(--light-gray);
+            color: var(--dark);
+            border: none;
+            border-radius: 4px;
+            padding: 8px 16px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+        
+        .reset-selection-button:hover {
+            background-color: #d1d5db;
+        }
     </style>
 </head>
 <body>
@@ -483,6 +521,7 @@
                 
                 <div id="selectionInstructions" class="selection-instructions">
                     Clique e arraste para selecionar a área que contém o texto para o nome do arquivo.
+                    A seleção será feita diretamente sobre o PDF.
                 </div>
                 
                 <div class="pdf-viewer">
@@ -498,10 +537,15 @@
                         </div>
                     </div>
                     <div id="pdfCanvasContainer" class="pdf-canvas-container">
-                        <canvas id="pdfCanvas" class="pdf-canvas"></canvas>
-                        <div id="selectionOverlay" class="selection-overlay hidden"></div>
+                        <div style="position: relative;">
+                            <canvas id="pdfCanvas" class="pdf-canvas"></canvas>
+                            <div id="selectionOverlay" class="selection-overlay hidden"></div>
+                            <div id="selectionHighlight" class="selection-highlight"></div>
+                        </div>
                     </div>
                 </div>
+                
+                <button id="resetSelection" class="reset-selection-button">Redefinir seleção</button>
                 
                 <div id="extractedTextContainer" class="extracted-text-container hidden">
                     <div class="extracted-text-label">Texto extraído:</div>
@@ -588,6 +632,7 @@
         const pdfCanvas = document.getElementById('pdfCanvas');
         const pdfCanvasContainer = document.getElementById('pdfCanvasContainer');
         const selectionOverlay = document.getElementById('selectionOverlay');
+        const selectionHighlight = document.getElementById('selectionHighlight');
         const extractedTextContainer = document.getElementById('extractedTextContainer');
         const extractedText = document.getElementById('extractedText');
         const filenamePattern = document.getElementById('filenamePattern');
@@ -596,6 +641,7 @@
         const pageInfo = document.getElementById('pageInfo');
         const zoomInBtn = document.getElementById('zoomIn');
         const zoomOutBtn = document.getElementById('zoomOut');
+        const resetSelectionBtn = document.getElementById('resetSelection');
         const progressFill = document.getElementById('progressFill');
         const progressText = document.getElementById('progressText');
         const progressPercent = document.getElementById('progressPercent');
@@ -744,18 +790,13 @@
             }
         });
 
+        // Reset da seleção
+        resetSelectionBtn.addEventListener('click', () => {
+            clearSelection();
+        });
+
         // Download do ZIP
         downloadZipBtn.addEventListener('click', downloadZip);
-
-        // Eventos para seleção de texto
-        pdfCanvasContainer.addEventListener('mousedown', startSelection);
-        pdfCanvasContainer.addEventListener('mousemove', updateSelection);
-        pdfCanvasContainer.addEventListener('mouseup', endSelection);
-        pdfCanvasContainer.addEventListener('mouseleave', () => {
-            if (selectionActive) {
-                endSelection();
-            }
-        });
 
         // Função para lidar com a seleção de arquivo
         function handleFileSelect() {
@@ -867,44 +908,99 @@
                 // Atualizar o retângulo do canvas para seleção
                 canvasRect = pdfCanvas.getBoundingClientRect();
                 
+                // Configurar o highlight para cobrir todo o canvas
+                selectionHighlight.style.width = `${pdfCanvas.width}px`;
+                selectionHighlight.style.height = `${pdfCanvas.height}px`;
+                
+                // Adicionar classe para mudar o cursor
+                pdfCanvas.classList.add('selection-active');
+                
                 // Limpar seleção anterior se estiver mudando de página
-                if (selectionCoordinates) {
+                if (selectionCoordinates && selectionCoordinates.pageNumber === pageNumber) {
                     // Mostrar a seleção existente na nova página
                     showSelectionOverlay(selectionCoordinates);
                 } else {
                     clearSelection();
                 }
+                
+                // Configurar eventos de seleção
+                setupSelectionEvents();
             } catch (error) {
                 console.error('Erro ao renderizar página:', error);
                 alert('Erro ao renderizar a página do PDF: ' + error.message);
             }
         }
 
+        // Configurar eventos de seleção
+        function setupSelectionEvents() {
+            // Remover eventos anteriores para evitar duplicação
+            pdfCanvas.removeEventListener('mousedown', startSelection);
+            pdfCanvas.removeEventListener('mousemove', updateSelection);
+            pdfCanvas.removeEventListener('mouseup', endSelection);
+            document.removeEventListener('mouseup', endSelectionOutside);
+            
+            // Adicionar novos eventos
+            pdfCanvas.addEventListener('mousedown', startSelection);
+            pdfCanvas.addEventListener('mousemove', updateSelection);
+            pdfCanvas.addEventListener('mouseup', endSelection);
+            document.addEventListener('mouseup', endSelectionOutside);
+            
+            // Mostrar o highlight quando o mouse estiver sobre o canvas
+            pdfCanvas.addEventListener('mouseover', () => {
+                selectionHighlight.style.display = 'block';
+            });
+            
+            pdfCanvas.addEventListener('mouseout', () => {
+                if (!selectionActive) {
+                    selectionHighlight.style.display = 'none';
+                }
+            });
+        }
+
         // Função para iniciar a seleção
         function startSelection(e) {
+            e.preventDefault();
             selectionActive = true;
             
-            // Calcular posição relativa ao canvas
+            // Obter posição do canvas
             const rect = pdfCanvas.getBoundingClientRect();
+            
+            // Calcular posição relativa ao canvas
             startX = e.clientX - rect.left;
             startY = e.clientY - rect.top;
             
-            // Mostrar overlay
+            // Garantir que as coordenadas estejam dentro dos limites do canvas
+            startX = Math.max(0, Math.min(startX, pdfCanvas.width));
+            startY = Math.max(0, Math.min(startY, pdfCanvas.height));
+            
+            // Inicializar o overlay
             selectionOverlay.style.left = `${startX}px`;
             selectionOverlay.style.top = `${startY}px`;
             selectionOverlay.style.width = '0px';
             selectionOverlay.style.height = '0px';
             selectionOverlay.classList.remove('hidden');
+            selectionOverlay.style.display = 'block';
+            
+            // Esconder o highlight durante a seleção
+            selectionHighlight.style.display = 'none';
         }
 
         // Função para atualizar a seleção
         function updateSelection(e) {
             if (!selectionActive) return;
             
-            // Calcular posição relativa ao canvas
+            e.preventDefault();
+            
+            // Obter posição do canvas
             const rect = pdfCanvas.getBoundingClientRect();
+            
+            // Calcular posição relativa ao canvas
             endX = e.clientX - rect.left;
             endY = e.clientY - rect.top;
+            
+            // Garantir que as coordenadas estejam dentro dos limites do canvas
+            endX = Math.max(0, Math.min(endX, pdfCanvas.width));
+            endY = Math.max(0, Math.min(endY, pdfCanvas.height));
             
             // Calcular dimensões
             const width = Math.abs(endX - startX);
@@ -922,8 +1018,10 @@
         }
 
         // Função para finalizar a seleção
-        async function endSelection() {
+        async function endSelection(e) {
             if (!selectionActive) return;
+            
+            e.preventDefault();
             selectionActive = false;
             
             // Verificar se a seleção é válida
@@ -931,7 +1029,10 @@
             const height = Math.abs(endY - startY);
             
             if (width < 10 || height < 10) {
-                clearSelection();
+                // Seleção muito pequena, ignorar
+                selectionOverlay.classList.add('hidden');
+                selectionOverlay.style.display = 'none';
+                selectionHighlight.style.display = 'block';
                 return;
             }
             
@@ -941,13 +1042,14 @@
                     left: Math.min(startX, endX) / scale,
                     top: Math.min(startY, endY) / scale,
                     right: Math.max(startX, endX) / scale,
-                    bottom: Math.max(startY, endY) / scale
+                    bottom: Math.max(startY, endY) / scale,
+                    pageNumber: currentPage
                 };
                 
                 // Extrair texto da área selecionada
                 const extractedTextValue = await extractTextFromSelection(currentPage, selectionCoordinates);
                 
-                if (extractedTextValue) {
+                if (extractedTextValue && extractedTextValue.trim() !== '') {
                     extractedText.textContent = extractedTextValue;
                     extractedTextContainer.classList.remove('hidden');
                     extractedTextContainer.style.display = 'block';
@@ -955,11 +1057,36 @@
                 } else {
                     alert('Nenhum texto foi encontrado na área selecionada. Por favor, tente novamente.');
                     clearSelection();
+                    selectionHighlight.style.display = 'block';
                 }
             } catch (error) {
                 console.error('Erro ao extrair texto:', error);
                 alert('Erro ao extrair texto da área selecionada: ' + error.message);
                 clearSelection();
+                selectionHighlight.style.display = 'block';
+            }
+        }
+
+        // Função para lidar com o fim da seleção fora do canvas
+        function endSelectionOutside(e) {
+            if (selectionActive) {
+                selectionActive = false;
+                
+                // Verificar se a seleção é válida
+                if (startX !== undefined && endX !== undefined) {
+                    const width = Math.abs(endX - startX);
+                    const height = Math.abs(endY - startY);
+                    
+                    if (width >= 10 && height >= 10) {
+                        // A seleção é válida, manter o overlay
+                        return;
+                    }
+                }
+                
+                // Seleção inválida, esconder o overlay
+                selectionOverlay.classList.add('hidden');
+                selectionOverlay.style.display = 'none';
+                selectionHighlight.style.display = 'none';
             }
         }
 
@@ -1012,15 +1139,23 @@
             selectionOverlay.style.width = `${width}px`;
             selectionOverlay.style.height = `${height}px`;
             selectionOverlay.classList.remove('hidden');
+            selectionOverlay.style.display = 'block';
+            
+            // Esconder o highlight quando há uma seleção
+            selectionHighlight.style.display = 'none';
         }
 
         // Função para limpar a seleção
         function clearSelection() {
             selectionOverlay.classList.add('hidden');
+            selectionOverlay.style.display = 'none';
             selectionCoordinates = null;
             continueToStep4.disabled = true;
             extractedTextContainer.classList.add('hidden');
             extractedTextContainer.style.display = 'none';
+            
+            // Mostrar o highlight novamente
+            selectionHighlight.style.display = 'block';
         }
 
         // Função para processar o PDF
@@ -1354,5 +1489,5 @@
             resultFiles.innerHTML = '';
         }
     </script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'951671ee14ddf1d7',t:'MTc1MDIwNDE4Mi4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9516a45434d9f171',t:'MTc1MDIwNjI0Ny4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
