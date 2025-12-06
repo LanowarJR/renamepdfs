@@ -98,6 +98,57 @@ fileUpload.addEventListener('click', (e) => {
 });
 
 // Evento de seleção de arquivo
+const spreadsheetFile = document.getElementById('spreadsheetFile');
+const spreadsheetConfig = document.getElementById('spreadsheetConfig');
+const searchColumnSelect = document.getElementById('searchColumn');
+const valueColumnSelect = document.getElementById('valueColumn');
+let spreadsheetData = null;
+
+if (spreadsheetFile) {
+    spreadsheetFile.addEventListener('change', async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        try {
+            const arrayBuffer = await file.arrayBuffer();
+            const workbook = read(arrayBuffer);
+            const firstSheetName = workbook.SheetNames[0];
+            const worksheet = workbook.Sheets[firstSheetName];
+
+            const jsonData = utils.sheet_to_json(worksheet);
+
+            if (jsonData.length === 0) {
+                alert("A planilha parece estar vazia.");
+                return;
+            }
+
+            spreadsheetData = jsonData;
+            const headers = Object.keys(jsonData[0]);
+
+            const populateSelect = (select) => {
+                select.innerHTML = '<option value="">Selecione uma coluna...</option>';
+                headers.forEach(header => {
+                    const option = document.createElement('option');
+                    option.value = header;
+                    option.textContent = header;
+                    select.appendChild(option);
+                });
+            };
+
+            populateSelect(searchColumnSelect);
+            populateSelect(valueColumnSelect);
+
+            spreadsheetConfig.classList.remove('hidden');
+            alert(`Planilha carregada com ${jsonData.length} linhas! Configure as colunas abaixo.`);
+
+        } catch (error) {
+            console.error("Erro ao ler planilha:", error);
+            alert("Erro ao ler o arquivo da planilha. Verifique se é um arquivo válido.");
+        }
+    });
+}
+
+// Evento de seleção de arquivo PDF
 pdfFileInput.addEventListener('change', handleFileSelect);
 
 // Drag and drop para o upload de arquivo
