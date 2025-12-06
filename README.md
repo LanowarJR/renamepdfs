@@ -57,6 +57,19 @@ Os arquivos gerados estarão na pasta `dist/`.
     *   Escolha onde está o texto do nome (qual página).
     *   **Modo de Extração**: Escolha entre desenhar uma área (`Seleção Visual`) ou usar busca automática (`CPF`, `E-mail`).
     *   *(Opcional)* **Planilha**: Carregue um Excel para cruzar dados. Use a tag `{lookup}` no padrão do nome.
+
+### 📋 Formatando sua Planilha (Excel/CSV)
+
+Para que a integração funcione, sua planilha deve seguir uma regra simples: **Ter cabeçalhos na primeira linha**.
+
+Exemplo de planilha válida:
+| Nome Completo (Coluna de Busca) | CPF (Coluna de Adição) | Matricula |
+| :--- | :--- | :--- |
+| JOAO DA SILVA | 123.456.789-00 | 001 |
+| MARIA OLIVEIRA | 999.888.777-66 | 002 |
+
+*   O app vai perguntar qual coluna usar para **buscar** (ex: "Nome Completo") e qual usar para **adicionar** ao nome do arquivo (ex: "CPF").
+*   A busca tenta ignorar maiúsculas/minúsculas, mas recomenda-se que os nomes estejam escritos da mesma forma que no PDF.
 3.  **Seleção (Se for visual)**: Desenhe um retângulo em volta do nome (ex: nome do funcionário no holerite).
 4.  **Processar**: O sistema vai ler cada página, renomear e gerar os novos arquivos.
 5.  **Download**: Baixe tudo de uma vez como um arquivo ZIP.
