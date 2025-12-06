@@ -1,11 +1,11 @@
 {
   "name": "renamepdfs",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Renomeia arquivos pdfs escolhendo o campo no conteudo do arquivo. como ex: Nomes, etc",
   "main": "index.js",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "node node_modules/vite/bin/vite.js build",
     "preview": "vite preview"
   },
   "repository": {
