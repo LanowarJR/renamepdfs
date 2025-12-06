@@ -1,1493 +1,251 @@
-
-
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Renomeador de PDF</title>
-    <script src="https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.4.120/build/pdf.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
-    <style>
-        :root {
-            --primary: #4361ee;
-            --primary-light: #4361ee20;
-            --dark: #1f2937;
-            --gray: #6b7280;
-            --light-gray: #e5e7eb;
-            --border: #d1d5db;
-            --background: #f9fafb;
-            --white: #ffffff;
-            --success: #10b981;
-            --error: #ef4444;
-            --warning: #f59e0b;
-            --info: #3b82f6;
-        }
-        
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
-        
-        body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
-            line-height: 1.5;
-            color: var(--dark);
-            background-color: var(--background);
-            padding: 20px;
-        }
-        
-        .container {
-            max-width: 1000px;
-            margin: 0 auto;
-            background-color: var(--white);
-            border-radius: 8px;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-            overflow: hidden;
-        }
-        
-        .header {
-            background-color: var(--primary);
-            color: var(--white);
-            padding: 20px;
-            text-align: center;
-        }
-        
-        .header h1 {
-            margin: 0;
-            font-size: 24px;
-            font-weight: 600;
-        }
-        
-        .content {
-            padding: 20px;
-        }
-        
-        .step {
-            display: block;
-        }
-        
-        .step.hidden {
-            display: none;
-        }
-        
-        .step-title {
-            font-size: 18px;
-            font-weight: 600;
-            margin-bottom: 15px;
-            color: var(--primary);
-        }
-        
-        .file-upload {
-            border: 2px dashed var(--border);
-            border-radius: 8px;
-            padding: 30px;
-            text-align: center;
-            background-color: rgba(0, 0, 0, 0.01);
-            cursor: pointer;
-            transition: all 0.2s ease;
-        }
-        
-        .file-upload:hover {
-            border-color: var(--primary);
-            background-color: var(--primary-light);
-        }
-        
-        .file-upload-icon {
-            font-size: 48px;
-            color: var(--primary);
-            margin-bottom: 10px;
-        }
-        
-        .file-upload-text {
-            color: var(--gray);
-            margin-bottom: 15px;
-        }
-        
-        .file-upload-button {
-            background-color: var(--primary);
-            color: var(--white);
-            border: none;
-            border-radius: 4px;
-            padding: 8px 16px;
-            font-size: 14px;
-            cursor: pointer;
-            transition: background-color 0.2s ease;
-        }
-        
-        .file-upload-button:hover {
-            background-color: #3651d4;
-        }
-        
-        .file-info {
-            margin-top: 20px;
-            padding: 15px;
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            display: none;
-        }
-        
-        .file-info.active {
-            display: block;
-        }
-        
-        .file-info-item {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 8px;
-        }
-        
-        .file-info-label {
-            font-weight: 500;
-            color: var(--gray);
-        }
-        
-        .file-info-value {
-            font-weight: 600;
-        }
-        
-        .form-group {
-            margin-bottom: 15px;
-        }
-        
-        .form-label {
-            display: block;
-            margin-bottom: 5px;
-            font-weight: 500;
-        }
-        
-        .form-input {
-            width: 100%;
-            padding: 8px 12px;
-            border: 1px solid var(--border);
-            border-radius: 4px;
-            font-size: 14px;
-        }
-        
-        .form-input:focus {
-            outline: none;
-            border-color: var(--primary);
-            box-shadow: 0 0 0 2px var(--primary-light);
-        }
-        
-        .button-group {
-            display: flex;
-            justify-content: space-between;
-            margin-top: 20px;
-        }
-        
-        .button {
-            padding: 10px 16px;
-            border: none;
-            border-radius: 4px;
-            font-size: 14px;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.2s ease;
-        }
-        
-        .button-primary {
-            background-color: var(--primary);
-            color: var(--white);
-        }
-        
-        .button-primary:hover {
-            background-color: #3651d4;
-        }
-        
-        .button-primary:disabled {
-            background-color: var(--light-gray);
-            color: var(--gray);
-            cursor: not-allowed;
-        }
-        
-        .button-secondary {
-            background-color: var(--light-gray);
-            color: var(--dark);
-        }
-        
-        .button-secondary:hover {
-            background-color: #d1d5db;
-        }
-        
-        .pdf-viewer {
-            margin: 20px 0;
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            overflow: hidden;
-        }
-        
-        .pdf-toolbar {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 10px;
-            background-color: var(--light-gray);
-            border-bottom: 1px solid var(--border);
-        }
-        
-        .pdf-navigation {
-            display: flex;
-            align-items: center;
-        }
-        
-        .pdf-button {
-            background-color: var(--white);
-            border: 1px solid var(--border);
-            border-radius: 4px;
-            padding: 5px 10px;
-            margin-right: 5px;
-            cursor: pointer;
-            font-size: 14px;
-        }
-        
-        .pdf-button:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-        
-        .pdf-page-info {
-            margin: 0 10px;
-            font-size: 14px;
-        }
-        
-        .pdf-zoom {
-            display: flex;
-            align-items: center;
-        }
-        
-        .pdf-canvas-container {
-            position: relative;
-            overflow: auto;
-            max-height: 500px;
-            background-color: #525659;
-            display: flex;
-            justify-content: center;
-            padding: 20px;
-        }
-        
-        .pdf-canvas {
-            background-color: white;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-            position: relative;
-        }
-        
-        /* Melhorias na seleção */
-        .selection-overlay {
-            position: absolute;
-            border: 2px dashed var(--primary);
-            background-color: rgba(67, 97, 238, 0.2);
-            pointer-events: none;
-            z-index: 10;
-        }
-        
-        .selection-overlay.hidden {
-            display: none;
-        }
-        
-        .selection-instructions {
-            margin-bottom: 15px;
-            padding: 10px;
-            background-color: var(--info);
-            color: var(--white);
-            border-radius: 4px;
-            font-size: 14px;
-        }
-        
-        /* Novo estilo para o cursor de seleção */
-        .selection-active {
-            cursor: crosshair !important;
-        }
-        
-        /* Estilo para destacar a área selecionável */
-        .selection-highlight {
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            border: 2px solid var(--primary);
-            pointer-events: none;
-            z-index: 5;
-            display: none;
-        }
-        
-        .extracted-text-container {
-            margin-top: 20px;
-            padding: 15px;
-            border: 1px solid var(--border);
-            border-radius: 8px;
-        }
-        
-        .extracted-text-container.hidden {
-            display: none;
-        }
-        
-        .extracted-text-label {
-            font-weight: 500;
-            margin-bottom: 5px;
-        }
-        
-        .extracted-text {
-            padding: 10px;
-            background-color: var(--light-gray);
-            border-radius: 4px;
-            font-family: monospace;
-            white-space: pre-wrap;
-            word-break: break-all;
-        }
-        
-        .progress-container {
-            margin: 20px 0;
-        }
-        
-        .progress-bar {
-            height: 10px;
-            background-color: var(--light-gray);
-            border-radius: 5px;
-            overflow: hidden;
-        }
-        
-        .progress-fill {
-            height: 100%;
-            background-color: var(--primary);
-            width: 0%;
-            transition: width 0.3s ease;
-        }
-        
-        .progress-info {
-            display: flex;
-            justify-content: space-between;
-            margin-top: 5px;
-            font-size: 14px;
-            color: var(--gray);
-        }
-        
-        .result-files {
-            margin-top: 20px;
-        }
-        
-        .result-file {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 10px;
-            border: 1px solid var(--border);
-            border-radius: 4px;
-            margin-bottom: 5px;
-        }
-        
-        .result-file-name {
-            font-weight: 500;
-        }
-        
-        .result-file-pages {
-            color: var(--gray);
-            font-size: 14px;
-        }
-        
-        .download-individual {
-            background-color: var(--success);
-            color: var(--white);
-            border: none;
-            border-radius: 4px;
-            padding: 5px 10px;
-            font-size: 12px;
-            cursor: pointer;
-            text-decoration: none;
-        }
-        
-        .download-individual:hover {
-            background-color: #0da271;
-        }
-        
-        .alert {
-            padding: 10px 15px;
-            border-radius: 4px;
-            margin-bottom: 15px;
-        }
-        
-        .alert-success {
-            background-color: #d1fae5;
-            color: #065f46;
-            border: 1px solid #a7f3d0;
-        }
-        
-        .alert-error {
-            background-color: #fee2e2;
-            color: #b91c1c;
-            border: 1px solid #fecaca;
-        }
-        
-        .alert-info {
-            background-color: #dbeafe;
-            color: #1e40af;
-            border: 1px solid #bfdbfe;
-        }
-        
-        .hidden {
-            display: none;
-        }
-        
-        /* Novo estilo para o botão de redefinir seleção */
-        .reset-selection-button {
-            margin-top: 10px;
-            background-color: var(--light-gray);
-            color: var(--dark);
-            border: none;
-            border-radius: 4px;
-            padding: 8px 16px;
-            font-size: 14px;
-            cursor: pointer;
-            transition: background-color 0.2s ease;
-        }
-        
-        .reset-selection-button:hover {
-            background-color: #d1d5db;
-        }
-    </style>
+    <title>Renomeador de PDF Pro</title>
 </head>
+
 <body>
-    <div class="container">
-        <div class="header">
-            <h1>Extrator de PDF</h1>
-        </div>
-        
-        <div class="content">
-            <!-- Etapa 1: Upload do PDF -->
-            <div id="step1" class="step">
-                <h2 class="step-title">1. Selecione o arquivo PDF</h2>
-                
-                <div class="file-upload" id="fileUpload">
-                    <div class="file-upload-icon">📄</div>
-                    <div class="file-upload-text">Arraste e solte o arquivo PDF aqui ou clique para selecionar</div>
+    <div class="app-container">
+        <header class="header">
+            <h1 class="brand">PDF Renamer Pro</h1>
+            <p class="subtitle">Separe, renomeie e organize seus documentos com inteligência.</p>
+        </header>
+
+        <div class="card-stack">
+            <!-- Etapa 1: Upload -->
+            <div id="step1" class="step-card">
+                <div class="step-header">
+                    <div class="step-title">
+                        <span class="step-number">1</span>
+                        Upload do Arquivo
+                    </div>
+                </div>
+
+                <div class="upload-area" id="fileUpload">
+                    <span class="upload-icon">📄</span>
+                    <h3 class="upload-title">Selecione seu PDF</h3>
+                    <p class="upload-hint">Arraste e solte ou clique para buscar</p>
+                    <button id="uploadButton" class="btn btn-primary">Buscar Arquivo</button>
                     <input type="file" id="pdfFile" accept=".pdf" style="display: none;">
-                    <button class="file-upload-button">Selecionar arquivo</button>
                 </div>
-                
-                <div id="fileInfo" class="file-info">
-                    <div class="file-info-item">
-                        <span class="file-info-label">Nome do arquivo:</span>
-                        <span id="fileName" class="file-info-value">-</span>
+
+                <div id="fileInfo" class="hidden">
+                    <div class="file-meta-box">
+                        <div class="meta-item">
+                            <span class="meta-label">Arquivo</span>
+                            <span class="meta-value" id="fileName">-</span>
+                        </div>
+                        <div class="meta-item">
+                            <span class="meta-label">Tamanho</span>
+                            <span class="meta-value" id="fileSize">-</span>
+                        </div>
+                        <div class="meta-item">
+                            <span class="meta-label">Páginas</span>
+                            <span class="meta-value" id="filePages">-</span>
+                        </div>
                     </div>
-                    <div class="file-info-item">
-                        <span class="file-info-label">Tamanho:</span>
-                        <span id="fileSize" class="file-info-value">-</span>
+                    <div style="margin-top: 1.5rem; text-align: right;">
+                        <button id="continueToStep2" class="btn btn-primary" disabled>
+                            Continuar configuração →
+                        </button>
                     </div>
-                    <div class="file-info-item">
-                        <span class="file-info-label">Páginas:</span>
-                        <span id="filePages" class="file-info-value">-</span>
-                    </div>
-                </div>
-                
-                <div class="button-group">
-                    <div></div>
-                    <button id="continueToStep2" class="button button-primary" disabled>Continuar</button>
                 </div>
             </div>
-            
-            <!-- Etapa 2: Configurações -->
-            <div id="step2" class="step hidden">
-                <h2 class="step-title">2. Configure as opções de extração</h2>
-                
-                <div class="form-group">
-                    <label class="form-label" for="pagesPerDocument">Páginas por documento:</label>
-                    <input type="number" id="pagesPerDocument" class="form-input" value="1" min="1">
+
+            <!-- Etapa 2: Configuração -->
+            <div id="step2" class="step-card hidden">
+                <div class="step-header">
+                    <div class="step-title">
+                        <span class="step-number">2</span>
+                        Configuração de Extração
+                    </div>
                 </div>
-                
-                <div class="form-group">
-                    <label class="form-label" for="textPageNumber">Página onde está o texto para o nome do arquivo:</label>
-                    <input type="number" id="textPageNumber" class="form-input" value="1" min="1">
+
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label class="label">Páginas por documento</label>
+                        <input type="number" id="pagesPerDocument" class="input" value="1" min="1">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="label">Página do texto alvo</label>
+                        <input type="number" id="textPageNumber" class="input" value="1" min="1">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="label">Modo de Extração</label>
+                        <select id="extractionMode" class="input">
+                            <option value="area">🎨 Seleção Visual (Desenhar área)</option>
+                            <option value="cpf">🆔 CPF Automático</option>
+                            <option value="email">📧 E-mail Automático</option>
+                            <option value="regex">🔣 Regex Personalizado</option>
+                        </select>
+                    </div>
                 </div>
-                
-                <div class="form-group">
-                    <label class="form-label" for="filenamePattern">Padrão para nome do arquivo:</label>
-                    <input type="text" id="filenamePattern" class="form-input" value="{text}_pagina{page}" placeholder="Ex: {text}_pagina{page}">
-                    <small style="color: var(--gray);">Use {text} para o texto extraído e {page} para o número da página</small>
+
+                <div id="regexContainer" class="form-group hidden">
+                    <label class="label">Padrão Regex (Ex: \d{4})</label>
+                    <input type="text" id="customRegex" class="input" placeholder="Digite sua expressão regular...">
                 </div>
-                
-                <div class="button-group">
-                    <button id="backToStep1" class="button button-secondary">Voltar</button>
-                    <button id="continueToStep3" class="button button-primary">Continuar</button>
+
+                <div class="form-group">
+                    <label class="label">Personalizar Nomenclatura</label>
+                    <div style="display: flex; gap: 10px; margin-bottom: 0.5rem;">
+                        <input type="text" id="filenamePrefix" class="input" placeholder="Prefixo (Ex: REL_)"
+                            style="flex: 1;">
+                        <input type="text" id="filenameSuffix" class="input" placeholder="Sufixo (Ex: _2024)"
+                            style="flex: 1;">
+                    </div>
+                    <label class="label">Padrão do Arquivo</label>
+                    <input type="text" id="filenamePattern" class="input" value="{text}_{page}"
+                        placeholder="{text}_{page}">
+                    <p class="small-text" style="margin-top: 0.25rem;">Tags: {text} = extraído, {page} = índice,
+                        {lookup} = valor da planilha</p>
+                </div>
+
+                <div class="form-group"
+                    style="padding: 1.5rem; background: #eef2ff; border-radius: 8px; border: 1px dashed var(--primary);">
+                    <label class="label" style="color: var(--primary);">📊 Enriquecer com Planilha (Opcional)</label>
+                    <p class="small-text" style="margin-bottom: 1rem;">Cruze o nome extraído com dados de uma planilha
+                        (Excel/CSV).</p>
+
+                    <input type="file" id="spreadsheetFile" accept=".xlsx, .xls, .csv" class="input"
+                        style="margin-bottom: 1rem;">
+
+                    <div id="spreadsheetConfig" class="hidden">
+                        <div class="form-grid">
+                            <div>
+                                <label class="label">Coluna de Busca (Nome no PDF)</label>
+                                <select id="searchColumn" class="input">
+                                    <option value="">Carregue uma planilha...</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="label">Coluna de Adição (Ex: CPF)</label>
+                                <select id="valueColumn" class="input">
+                                    <option value="">Carregue uma planilha...</option>
+                                </select>
+                            </div>
+                        </div>
+                        <p class="small-text" style="margin-top: 0.5rem;">O app irá procurar o texto extraído na
+                            <b>Coluna de Busca</b> e adicionar o valor da <b>Coluna de Adição</b> ao nome.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="label">Nome Padrão (Fallback)</label>
+                    <input type="text" id="defaultFilename" class="input" value="documento">
+                </div>
+
+                <div style="display: flex; justify-content: space-between; margin-top: 2rem;">
+                    <button id="backToStep1" class="btn btn-secondary">← Voltar</button>
+                    <button id="continueToStep3" class="btn btn-primary">Avançar →</button>
                 </div>
             </div>
-            
-            <!-- Etapa 3: Seleção de área -->
-            <div id="step3" class="step hidden">
-                <h2 class="step-title">3. Selecione a área com o texto para o nome do arquivo</h2>
-                
-                <div id="selectionInstructions" class="selection-instructions">
-                    Clique e arraste para selecionar a área que contém o texto para o nome do arquivo.
-                    A seleção será feita diretamente sobre o PDF.
+
+            <!-- Etapa 3: Seleção Visual -->
+            <div id="step3" class="step-card hidden">
+                <div class="step-header">
+                    <div class="step-title">
+                        <span class="step-number">3</span>
+                        Seleção de Área
+                    </div>
                 </div>
-                
-                <div class="pdf-viewer">
+
+                <div class="status-badge status-info" style="background: #e0f2fe; color: #0369a1; margin-bottom: 1rem;">
+                    ℹ️ Desenhe um retângulo sobre o texto que deseja usar como nome.
+                </div>
+
+                <div class="pdf-container">
                     <div class="pdf-toolbar">
-                        <div class="pdf-navigation">
-                            <button id="prevPage" class="pdf-button" disabled>&lt; Anterior</button>
-                            <span id="pageInfo" class="pdf-page-info">Página 1 de 1</span>
-                            <button id="nextPage" class="pdf-button" disabled>Próxima &gt;</button>
+                        <div>
+                            <span id="pageInfo">Carregando...</span>
                         </div>
-                        <div class="pdf-zoom">
-                            <button id="zoomOut" class="pdf-button">-</button>
-                            <button id="zoomIn" class="pdf-button">+</button>
+                        <div style="display: flex; gap: 0.5rem;">
+                            <button id="prevPage" class="pdf-btn-icon">◀</button>
+                            <button id="nextPage" class="pdf-btn-icon">▶</button>
+                            <div style="width: 1rem;"></div>
+                            <button id="zoomOut" class="pdf-btn-icon">－</button>
+                            <button id="zoomIn" class="pdf-btn-icon">＋</button>
                         </div>
                     </div>
-                    <div id="pdfCanvasContainer" class="pdf-canvas-container">
+                    <div class="canvas-wrapper" id="pdfCanvasContainer">
                         <div style="position: relative;">
-                            <canvas id="pdfCanvas" class="pdf-canvas"></canvas>
+                            <canvas id="pdfCanvas"></canvas>
                             <div id="selectionOverlay" class="selection-overlay hidden"></div>
-                            <div id="selectionHighlight" class="selection-highlight"></div>
+                            <div id="selectionHighlight"
+                                style="position: absolute; top:0; left:0; pointer-events:none;"></div>
                         </div>
                     </div>
                 </div>
-                
-                <button id="resetSelection" class="reset-selection-button">Redefinir seleção</button>
-                
-                <div id="extractedTextContainer" class="extracted-text-container hidden">
-                    <div class="extracted-text-label">Texto extraído:</div>
-                    <div id="extractedText" class="extracted-text"></div>
+
+                <div id="extractedTextContainer" class="hidden" style="margin-bottom: 1.5rem;">
+                    <label class="label">Texto Detectado:</label>
+                    <div id="extractedText"
+                        style="background: #f1f5f9; padding: 1rem; border-radius: 8px; font-family: monospace;"></div>
                 </div>
-                
-                <div class="button-group">
-                    <button id="backToStep2" class="button button-secondary">Voltar</button>
-                    <button id="continueToStep4" class="button button-primary" disabled>Processar PDF</button>
+
+                <div style="display: flex; justify-content: space-between;">
+                    <button id="backToStep2" class="btn btn-secondary">← Configuração</button>
+                    <div>
+                        <button id="resetSelection" class="btn btn-secondary" style="margin-right: 0.5rem;">Limpar
+                            Seleção</button>
+                        <button id="continueToStep4" class="btn btn-primary" disabled>Processar PDF →</button>
+                    </div>
                 </div>
             </div>
-            
+
             <!-- Etapa 4: Processamento -->
-            <div id="step4" class="step hidden">
-                <h2 class="step-title">4. Processando o PDF</h2>
-                
-                <div class="progress-container">
-                    <div class="progress-bar">
-                        <div id="progressFill" class="progress-fill" style="width: 0%"></div>
-                    </div>
-                    <div class="progress-info">
-                        <span id="progressText">Preparando...</span>
-                        <span id="progressPercent">0%</span>
+            <div id="step4" class="step-card hidden">
+                <div class="step-header">
+                    <div class="step-title">
+                        <span class="step-number">4</span>
+                        Processando...
                     </div>
                 </div>
-                
-                <div id="processingSuccess" class="alert alert-success">
-                    O processamento está em andamento. Por favor, aguarde...
+
+                <div style="text-align: center; padding: 2rem;">
+                    <div class="progress-track">
+                        <div id="progressFill" class="progress-bar"></div>
+                    </div>
+                    <p id="progressText" style="font-weight: 500;">Iniciando...</p>
+                    <p id="progressPercent" class="small-text">0%</p>
                 </div>
-                
-                <div id="processingError" class="alert alert-error hidden">
-                    Ocorreu um erro durante o processamento.
-                </div>
+
+                <div id="processingError" class="status-badge status-error hidden"></div>
+                <div id="processingSuccess" class="hidden"></div> <!-- Placeholder -->
             </div>
-            
-            <!-- Etapa 5: Download -->
-            <div id="step5" class="step hidden">
-                <h2 class="step-title">5. Download dos arquivos</h2>
-                
-                <div id="resultFiles" class="result-files"></div>
-                
-                <div class="button-group">
-                    <button id="startOver" class="button button-secondary">Começar novamente</button>
-                    <button id="downloadZip" class="button button-primary">Baixar todos (ZIP)</button>
+
+            <!-- Etapa 5: Finalização -->
+            <div id="step5" class="step-card hidden">
+                <div class="step-header">
+                    <div class="step-title">
+                        <span class="step-number">5</span>
+                        Concluído!
+                    </div>
+                    <button id="startOver" class="btn btn-secondary">Novo Processo</button>
                 </div>
+
+                <div style="text-align: center; margin-bottom: 2rem;">
+                    <div style="font-size: 3rem; margin-bottom: 0.5rem;">🎉</div>
+                    <h3>Tudo pronto!</h3>
+                    <p class="small-text">Seus arquivos foram gerados com sucesso.</p>
+                    <div style="margin-top: 1.5rem;">
+                        <button id="downloadZip" class="btn btn-success" style="font-size: 1.1rem; padding: 1rem 2rem;">
+                            📥 Baixar Todos (ZIP)
+                        </button>
+                    </div>
+                </div>
+
+                <div id="resultFiles" class="file-list"></div>
             </div>
         </div>
     </div>
+    <script type="module" src="/main.js"></script>
+</body>
 
-    <script>
-        // Configurar o worker do PDF.js
-        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.4.120/build/pdf.worker.min.js';
-
-        // Variáveis globais
-        let pdfDoc = null;
-        let pdfBytes = null;
-        let pdfArrayBuffer = null;
-        let currentPage = 1;
-        let totalPages = 0;
-        let scale = 1.5;
-        let selectionActive = false;
-        let startX, startY, endX, endY;
-        let selectionCoordinates = null;
-        let canvasRect;
-        let processedFiles = [];
-        let pdfBlobs = {};
-        let zip = new JSZip();
-
-        // Elementos da interface
-        const pdfFileInput = document.getElementById('pdfFile');
-        const fileUpload = document.querySelector('.file-upload');
-        const fileUploadButton = document.querySelector('.file-upload-button');
-        const fileInfo = document.getElementById('fileInfo');
-        const fileName = document.getElementById('fileName');
-        const fileSize = document.getElementById('fileSize');
-        const filePages = document.getElementById('filePages');
-        const continueToStep2 = document.getElementById('continueToStep2');
-        const backToStep1 = document.getElementById('backToStep1');
-        const continueToStep3 = document.getElementById('continueToStep3');
-        const backToStep2 = document.getElementById('backToStep2');
-        const continueToStep4 = document.getElementById('continueToStep4');
-        const pagesPerDocumentInput = document.getElementById('pagesPerDocument');
-        const textPageNumberInput = document.getElementById('textPageNumber');
-        const pdfCanvas = document.getElementById('pdfCanvas');
-        const pdfCanvasContainer = document.getElementById('pdfCanvasContainer');
-        const selectionOverlay = document.getElementById('selectionOverlay');
-        const selectionHighlight = document.getElementById('selectionHighlight');
-        const extractedTextContainer = document.getElementById('extractedTextContainer');
-        const extractedText = document.getElementById('extractedText');
-        const filenamePattern = document.getElementById('filenamePattern');
-        const prevPageBtn = document.getElementById('prevPage');
-        const nextPageBtn = document.getElementById('nextPage');
-        const pageInfo = document.getElementById('pageInfo');
-        const zoomInBtn = document.getElementById('zoomIn');
-        const zoomOutBtn = document.getElementById('zoomOut');
-        const resetSelectionBtn = document.getElementById('resetSelection');
-        const progressFill = document.getElementById('progressFill');
-        const progressText = document.getElementById('progressText');
-        const progressPercent = document.getElementById('progressPercent');
-        const processingSuccess = document.getElementById('processingSuccess');
-        const processingError = document.getElementById('processingError');
-        const resultFiles = document.getElementById('resultFiles');
-        const startOverBtn = document.getElementById('startOver');
-        const downloadZipBtn = document.getElementById('downloadZip');
-        const step1 = document.getElementById('step1');
-        const step2 = document.getElementById('step2');
-        const step3 = document.getElementById('step3');
-        const step4 = document.getElementById('step4');
-        const step5 = document.getElementById('step5');
-
-        // Evento de clique no botão de upload
-        fileUploadButton.addEventListener('click', () => {
-            pdfFileInput.click();
-        });
-
-        // Evento de clique na área de upload
-        fileUpload.addEventListener('click', (e) => {
-            if (e.target !== fileUploadButton) {
-                pdfFileInput.click();
-            }
-        });
-
-        // Evento de seleção de arquivo
-        pdfFileInput.addEventListener('change', handleFileSelect);
-
-        // Drag and drop para o upload de arquivo
-        fileUpload.addEventListener('dragover', (e) => {
-            e.preventDefault();
-            fileUpload.style.borderColor = 'var(--primary)';
-            fileUpload.style.backgroundColor = 'rgba(67, 97, 238, 0.1)';
-        });
-        
-        fileUpload.addEventListener('dragleave', (e) => {
-            e.preventDefault();
-            fileUpload.style.borderColor = 'var(--border)';
-            fileUpload.style.backgroundColor = 'rgba(0, 0, 0, 0.01)';
-        });
-        
-        fileUpload.addEventListener('drop', (e) => {
-            e.preventDefault();
-            fileUpload.style.borderColor = 'var(--border)';
-            fileUpload.style.backgroundColor = 'rgba(0, 0, 0, 0.01)';
-            
-            if (e.dataTransfer.files.length > 0) {
-                pdfFileInput.files = e.dataTransfer.files;
-                handleFileSelect();
-            }
-        });
-
-        // Navegação entre etapas
-        continueToStep2.addEventListener('click', () => {
-            if (!pdfBytes || pdfBytes.length === 0) {
-                alert("Erro: Os dados do PDF não estão disponíveis. Por favor, selecione o arquivo novamente.");
-                return;
-            }
-            
-            step1.classList.add('hidden');
-            step2.classList.remove('hidden');
-        });
-
-        backToStep1.addEventListener('click', () => {
-            step2.classList.add('hidden');
-            step1.classList.remove('hidden');
-        });
-
-        continueToStep3.addEventListener('click', () => {
-            if (!pdfBytes || pdfBytes.length === 0) {
-                alert("Erro: Os dados do PDF não estão disponíveis. Por favor, volte e selecione o arquivo novamente.");
-                return;
-            }
-            
-            const pagesPerDocument = parseInt(pagesPerDocumentInput.value);
-            const textPageNumber = parseInt(textPageNumberInput.value);
-            
-            if (isNaN(pagesPerDocument) || pagesPerDocument < 1) {
-                alert('Por favor, insira um número válido de páginas por documento.');
-                return;
-            }
-            
-            if (isNaN(textPageNumber) || textPageNumber < 1 || textPageNumber > pagesPerDocument) {
-                alert(`Por favor, insira um número de página válido entre 1 e ${pagesPerDocument}.`);
-                return;
-            }
-            
-            step2.classList.add('hidden');
-            step3.classList.remove('hidden');
-            
-            // Calcular a primeira página do primeiro documento
-            const firstDocPage = 1 + (textPageNumber - 1);
-            currentPage = firstDocPage;
-            
-            renderPdfPage(currentPage);
-        });
-
-        backToStep2.addEventListener('click', () => {
-            step3.classList.add('hidden');
-            step2.classList.remove('hidden');
-        });
-
-        continueToStep4.addEventListener('click', () => {
-            if (!pdfBytes || pdfBytes.length === 0) {
-                alert("Erro: Os dados do PDF não estão disponíveis. Por favor, volte e selecione o arquivo novamente.");
-                return;
-            }
-            
-            step3.classList.add('hidden');
-            step4.classList.remove('hidden');
-            processPdf();
-        });
-
-        startOverBtn.addEventListener('click', () => {
-            resetApp();
-            step5.classList.add('hidden');
-            step1.classList.remove('hidden');
-        });
-
-        // Navegação do PDF
-        prevPageBtn.addEventListener('click', () => {
-            if (currentPage > 1) {
-                currentPage--;
-                renderPdfPage(currentPage);
-            }
-        });
-
-        nextPageBtn.addEventListener('click', () => {
-            if (currentPage < totalPages) {
-                currentPage++;
-                renderPdfPage(currentPage);
-            }
-        });
-
-        // Zoom do PDF
-        zoomInBtn.addEventListener('click', () => {
-            scale += 0.25;
-            renderPdfPage(currentPage);
-        });
-
-        zoomOutBtn.addEventListener('click', () => {
-            if (scale > 0.5) {
-                scale -= 0.25;
-                renderPdfPage(currentPage);
-            }
-        });
-
-        // Reset da seleção
-        resetSelectionBtn.addEventListener('click', () => {
-            clearSelection();
-        });
-
-        // Download do ZIP
-        downloadZipBtn.addEventListener('click', downloadZip);
-
-        // Função para lidar com a seleção de arquivo
-        function handleFileSelect() {
-            if (pdfFileInput.files.length === 0) {
-                return;
-            }
-
-            const file = pdfFileInput.files[0];
-            if (file.type !== 'application/pdf') {
-                alert('Por favor, selecione um arquivo PDF válido.');
-                return;
-            }
-
-            fileName.textContent = file.name;
-            fileSize.textContent = formatFileSize(file.size);
-            filePages.textContent = 'Carregando...';
-            fileInfo.classList.add('active');
-            fileInfo.style.display = 'block';
-
-            const fileReader = new FileReader();
-            fileReader.onload = async function() {
-                try {
-                    // Armazenar o ArrayBuffer original
-                    pdfArrayBuffer = fileReader.result;
-                    
-                    // Criar uma cópia dos bytes do PDF
-                    pdfBytes = new Uint8Array(pdfArrayBuffer);
-                    
-                    // Verificar se os dados são válidos
-                    if (!pdfBytes || pdfBytes.length < 10) {
-                        throw new Error("O arquivo PDF parece estar corrompido ou vazio");
-                    }
-                    
-                    console.log(`PDF carregado: ${pdfBytes.length} bytes`);
-                    
-                    // Carregar o PDF com PDF.js
-                    try {
-                        // Criar uma nova cópia dos dados para o PDF.js
-                        const pdfJsBytes = new Uint8Array(pdfArrayBuffer.slice(0));
-                        pdfDoc = await pdfjsLib.getDocument({data: pdfJsBytes}).promise;
-                        totalPages = pdfDoc.numPages;
-                        filePages.textContent = `${totalPages} páginas`;
-                        
-                        // Habilitar o botão de continuar
-                        continueToStep2.disabled = false;
-                        
-                        // Configurar valores máximos
-                        pagesPerDocumentInput.max = totalPages;
-                        pagesPerDocumentInput.value = Math.min(parseInt(pagesPerDocumentInput.value) || 1, totalPages);
-                        textPageNumberInput.max = pagesPerDocumentInput.value;
-                        textPageNumberInput.value = Math.min(parseInt(textPageNumberInput.value) || 1, parseInt(pagesPerDocumentInput.value));
-                        
-                        console.log(`PDF carregado com sucesso: ${totalPages} páginas`);
-                    } catch (e) {
-                        console.error("Erro ao carregar PDF com PDF.js:", e);
-                        throw new Error("Não foi possível processar este PDF. Por favor, tente com outro arquivo.");
-                    }
-                } catch (error) {
-                    console.error('Erro ao carregar o PDF:', error);
-                    alert(error.message || 'Não foi possível carregar o PDF. Verifique se o arquivo é válido.');
-                    filePages.textContent = 'Erro ao carregar o arquivo';
-                    continueToStep2.disabled = true;
-                }
-            };
-            
-            fileReader.onerror = function() {
-                console.error('Erro ao ler o arquivo');
-                alert('Erro ao ler o arquivo. Por favor, tente novamente.');
-                filePages.textContent = '';
-                continueToStep2.disabled = true;
-            };
-            
-            // Ler o arquivo como ArrayBuffer para preservar os dados binários
-            fileReader.readAsArrayBuffer(file);
-        }
-
-        // Função para renderizar uma página do PDF
-        async function renderPdfPage(pageNumber) {
-            try {
-                // Verificar se o PDF está carregado
-                if (!pdfDoc) {
-                    console.error("PDF não carregado ao tentar renderizar página");
-                    throw new Error("PDF não carregado. Por favor, selecione o arquivo novamente.");
-                }
-                
-                // Atualizar informações da página
-                pageInfo.textContent = `Página ${pageNumber} de ${totalPages}`;
-                
-                // Habilitar/desabilitar botões de navegação
-                prevPageBtn.disabled = pageNumber <= 1;
-                nextPageBtn.disabled = pageNumber >= totalPages;
-                
-                // Obter a página
-                const page = await pdfDoc.getPage(pageNumber);
-                
-                // Calcular dimensões
-                const viewport = page.getViewport({ scale });
-                pdfCanvas.width = viewport.width;
-                pdfCanvas.height = viewport.height;
-                
-                // Renderizar a página
-                const renderContext = {
-                    canvasContext: pdfCanvas.getContext('2d'),
-                    viewport: viewport
-                };
-                
-                await page.render(renderContext).promise;
-                
-                // Atualizar o retângulo do canvas para seleção
-                canvasRect = pdfCanvas.getBoundingClientRect();
-                
-                // Configurar o highlight para cobrir todo o canvas
-                selectionHighlight.style.width = `${pdfCanvas.width}px`;
-                selectionHighlight.style.height = `${pdfCanvas.height}px`;
-                
-                // Adicionar classe para mudar o cursor
-                pdfCanvas.classList.add('selection-active');
-                
-                // Limpar seleção anterior se estiver mudando de página
-                if (selectionCoordinates && selectionCoordinates.pageNumber === pageNumber) {
-                    // Mostrar a seleção existente na nova página
-                    showSelectionOverlay(selectionCoordinates);
-                } else {
-                    clearSelection();
-                }
-                
-                // Configurar eventos de seleção
-                setupSelectionEvents();
-            } catch (error) {
-                console.error('Erro ao renderizar página:', error);
-                alert('Erro ao renderizar a página do PDF: ' + error.message);
-            }
-        }
-
-        // Configurar eventos de seleção
-        function setupSelectionEvents() {
-            // Remover eventos anteriores para evitar duplicação
-            pdfCanvas.removeEventListener('mousedown', startSelection);
-            pdfCanvas.removeEventListener('mousemove', updateSelection);
-            pdfCanvas.removeEventListener('mouseup', endSelection);
-            document.removeEventListener('mouseup', endSelectionOutside);
-            
-            // Adicionar novos eventos
-            pdfCanvas.addEventListener('mousedown', startSelection);
-            pdfCanvas.addEventListener('mousemove', updateSelection);
-            pdfCanvas.addEventListener('mouseup', endSelection);
-            document.addEventListener('mouseup', endSelectionOutside);
-            
-            // Mostrar o highlight quando o mouse estiver sobre o canvas
-            pdfCanvas.addEventListener('mouseover', () => {
-                selectionHighlight.style.display = 'block';
-            });
-            
-            pdfCanvas.addEventListener('mouseout', () => {
-                if (!selectionActive) {
-                    selectionHighlight.style.display = 'none';
-                }
-            });
-        }
-
-        // Função para iniciar a seleção
-        function startSelection(e) {
-            e.preventDefault();
-            selectionActive = true;
-            
-            // Obter posição do canvas
-            const rect = pdfCanvas.getBoundingClientRect();
-            
-            // Calcular posição relativa ao canvas
-            startX = e.clientX - rect.left;
-            startY = e.clientY - rect.top;
-            
-            // Garantir que as coordenadas estejam dentro dos limites do canvas
-            startX = Math.max(0, Math.min(startX, pdfCanvas.width));
-            startY = Math.max(0, Math.min(startY, pdfCanvas.height));
-            
-            // Inicializar o overlay
-            selectionOverlay.style.left = `${startX}px`;
-            selectionOverlay.style.top = `${startY}px`;
-            selectionOverlay.style.width = '0px';
-            selectionOverlay.style.height = '0px';
-            selectionOverlay.classList.remove('hidden');
-            selectionOverlay.style.display = 'block';
-            
-            // Esconder o highlight durante a seleção
-            selectionHighlight.style.display = 'none';
-        }
-
-        // Função para atualizar a seleção
-        function updateSelection(e) {
-            if (!selectionActive) return;
-            
-            e.preventDefault();
-            
-            // Obter posição do canvas
-            const rect = pdfCanvas.getBoundingClientRect();
-            
-            // Calcular posição relativa ao canvas
-            endX = e.clientX - rect.left;
-            endY = e.clientY - rect.top;
-            
-            // Garantir que as coordenadas estejam dentro dos limites do canvas
-            endX = Math.max(0, Math.min(endX, pdfCanvas.width));
-            endY = Math.max(0, Math.min(endY, pdfCanvas.height));
-            
-            // Calcular dimensões
-            const width = Math.abs(endX - startX);
-            const height = Math.abs(endY - startY);
-            
-            // Calcular posição do canto superior esquerdo
-            const left = Math.min(startX, endX);
-            const top = Math.min(startY, endY);
-            
-            // Atualizar overlay
-            selectionOverlay.style.left = `${left}px`;
-            selectionOverlay.style.top = `${top}px`;
-            selectionOverlay.style.width = `${width}px`;
-            selectionOverlay.style.height = `${height}px`;
-        }
-
-        // Função para finalizar a seleção
-        async function endSelection(e) {
-            if (!selectionActive) return;
-            
-            e.preventDefault();
-            selectionActive = false;
-            
-            // Verificar se a seleção é válida
-            const width = Math.abs(endX - startX);
-            const height = Math.abs(endY - startY);
-            
-            if (width < 10 || height < 10) {
-                // Seleção muito pequena, ignorar
-                selectionOverlay.classList.add('hidden');
-                selectionOverlay.style.display = 'none';
-                selectionHighlight.style.display = 'block';
-                return;
-            }
-            
-            try {
-                // Salvar coordenadas da seleção
-                selectionCoordinates = {
-                    left: Math.min(startX, endX) / scale,
-                    top: Math.min(startY, endY) / scale,
-                    right: Math.max(startX, endX) / scale,
-                    bottom: Math.max(startY, endY) / scale,
-                    pageNumber: currentPage
-                };
-                
-                // Extrair texto da área selecionada
-                const extractedTextValue = await extractTextFromSelection(currentPage, selectionCoordinates);
-                
-                if (extractedTextValue && extractedTextValue.trim() !== '') {
-                    extractedText.textContent = extractedTextValue;
-                    extractedTextContainer.classList.remove('hidden');
-                    extractedTextContainer.style.display = 'block';
-                    continueToStep4.disabled = false;
-                } else {
-                    alert('Nenhum texto foi encontrado na área selecionada. Por favor, tente novamente.');
-                    clearSelection();
-                    selectionHighlight.style.display = 'block';
-                }
-            } catch (error) {
-                console.error('Erro ao extrair texto:', error);
-                alert('Erro ao extrair texto da área selecionada: ' + error.message);
-                clearSelection();
-                selectionHighlight.style.display = 'block';
-            }
-        }
-
-        // Função para lidar com o fim da seleção fora do canvas
-        function endSelectionOutside(e) {
-            if (selectionActive) {
-                selectionActive = false;
-                
-                // Verificar se a seleção é válida
-                if (startX !== undefined && endX !== undefined) {
-                    const width = Math.abs(endX - startX);
-                    const height = Math.abs(endY - startY);
-                    
-                    if (width >= 10 && height >= 10) {
-                        // A seleção é válida, manter o overlay
-                        return;
-                    }
-                }
-                
-                // Seleção inválida, esconder o overlay
-                selectionOverlay.classList.add('hidden');
-                selectionOverlay.style.display = 'none';
-                selectionHighlight.style.display = 'none';
-            }
-        }
-
-        // Função para extrair texto da seleção
-        async function extractTextFromSelection(pageNum, coordinates) {
-            try {
-                if (!pdfDoc) {
-                    throw new Error("PDF não carregado ao tentar extrair texto");
-                }
-                
-                const page = await pdfDoc.getPage(pageNum);
-                const viewport = page.getViewport({ scale: 1.0 }); // Escala 1.0 para coordenadas reais
-                
-                // Inverter coordenadas Y (PDF tem origem no canto inferior esquerdo)
-                const pdfTop = viewport.height - coordinates.bottom;
-                const pdfBottom = viewport.height - coordinates.top;
-                
-                // Extrair texto
-                const textContent = await page.getTextContent();
-                let extractedText = '';
-                
-                for (const item of textContent.items) {
-                    const tx = item.transform[4];
-                    const ty = item.transform[5];
-                    
-                    // Verificar se o item está dentro da área selecionada
-                    if (tx >= coordinates.left && tx <= coordinates.right && ty >= pdfTop && ty <= pdfBottom) {
-                        extractedText += item.str + ' ';
-                    }
-                }
-                
-                return extractedText.trim();
-            } catch (error) {
-                console.error('Erro ao extrair texto:', error);
-                throw error;
-            }
-        }
-
-        // Função para mostrar a seleção existente
-        function showSelectionOverlay(coordinates) {
-            // Converter coordenadas do PDF para coordenadas do canvas
-            const left = coordinates.left * scale;
-            const top = coordinates.top * scale;
-            const width = (coordinates.right - coordinates.left) * scale;
-            const height = (coordinates.bottom - coordinates.top) * scale;
-            
-            // Atualizar overlay
-            selectionOverlay.style.left = `${left}px`;
-            selectionOverlay.style.top = `${top}px`;
-            selectionOverlay.style.width = `${width}px`;
-            selectionOverlay.style.height = `${height}px`;
-            selectionOverlay.classList.remove('hidden');
-            selectionOverlay.style.display = 'block';
-            
-            // Esconder o highlight quando há uma seleção
-            selectionHighlight.style.display = 'none';
-        }
-
-        // Função para limpar a seleção
-        function clearSelection() {
-            selectionOverlay.classList.add('hidden');
-            selectionOverlay.style.display = 'none';
-            selectionCoordinates = null;
-            continueToStep4.disabled = true;
-            extractedTextContainer.classList.add('hidden');
-            extractedTextContainer.style.display = 'none';
-            
-            // Mostrar o highlight novamente
-            selectionHighlight.style.display = 'block';
-        }
-
-        // Função para processar o PDF
-        async function processPdf() {
-            try {
-                console.log('Iniciando processamento do PDF...');
-                
-                // Verificar se temos os bytes do PDF
-                if (!pdfBytes || pdfBytes.length === 0) {
-                    console.error("Dados do PDF não disponíveis no início do processamento");
-                    throw new Error("Dados do PDF não estão disponíveis. Por favor, recarregue a página e tente novamente.");
-                }
-                
-                // Obter configurações
-                const pagesPerDocument = parseInt(pagesPerDocumentInput.value);
-                const textPageOffset = parseInt(textPageNumberInput.value) - 1; // Converter para índice baseado em 0
-                
-                // Calcular número de documentos
-                const numDocuments = Math.ceil(totalPages / pagesPerDocument);
-                console.log(`Total de páginas: ${totalPages}, Páginas por documento: ${pagesPerDocument}, Total de documentos: ${numDocuments}`);
-                
-                // Resetar variáveis
-                processedFiles = [];
-                pdfBlobs = {};
-                zip = new JSZip();
-                
-                // Pré-carregar o PDF com PDF-LIB para processamento
-                console.log("Carregando PDF com PDF-LIB...");
-                const { PDFDocument } = PDFLib;
-                let originalPdfDoc;
-                
-                try {
-                    // Criar uma cópia fresca dos dados para o PDF-LIB
-                    const pdfLibBytes = new Uint8Array(pdfArrayBuffer.slice(0));
-                    originalPdfDoc = await PDFDocument.load(pdfLibBytes);
-                    console.log("PDF carregado com sucesso no PDF-LIB");
-                } catch (error) {
-                    console.error("Erro ao carregar PDF com PDF-LIB:", error);
-                    throw new Error("Não foi possível processar o PDF. Erro: " + error.message);
-                }
-                
-                // Processar cada documento
-                for (let docIndex = 0; docIndex < numDocuments; docIndex++) {
-                    // Calcular páginas para este documento
-                    const startPage = docIndex * pagesPerDocument + 1; // Página inicial (baseada em 1)
-                    const endPage = Math.min((docIndex + 1) * pagesPerDocument, totalPages); // Página final
-                    
-                    // Calcular a página onde está o texto para extração
-                    const textPage = startPage + textPageOffset;
-                    
-                    // Verificar se a página de texto está dentro do intervalo válido
-                    if (textPage > endPage) {
-                        throw new Error(`A página de texto (${textPage}) está fora do intervalo válido para o documento ${docIndex + 1} (${startPage}-${endPage}).`);
-                    }
-                    
-                    // Atualizar progresso
-                    const progress = Math.round((docIndex / numDocuments) * 50);
-                    progressFill.style.width = `${progress}%`;
-                    progressText.textContent = `Extraindo texto do documento ${docIndex + 1}/${numDocuments}`;
-                    progressPercent.textContent = `${progress}%`;
-                    
-                    // Permitir que a UI atualize
-                    await new Promise(resolve => setTimeout(resolve, 10));
-                    
-                    // Extrair texto para o nome do arquivo
-                    let docName = '';
-                    try {
-                        docName = await extractTextFromSelection(textPage, selectionCoordinates);
-                        if (!docName) {
-                            docName = `documento_${docIndex + 1}`;
-                        }
-                    } catch (error) {
-                        console.warn(`Erro ao extrair texto para o documento ${docIndex + 1}:`, error);
-                        docName = `documento_${docIndex + 1}`;
-                    }
-                    
-                    // Limpar o nome do documento para uso em nome de arquivo
-                    docName = sanitizeFilename(docName);
-                    
-                    // Processar cada página do documento
-                    for (let pageNum = startPage; pageNum <= endPage; pageNum++) {
-                        // Atualizar progresso
-                        const pageProgress = 50 + Math.round(((pageNum - startPage) / (endPage - startPage + 1) + docIndex) / numDocuments * 50);
-                        progressFill.style.width = `${pageProgress}%`;
-                        progressText.textContent = `Processando página ${pageNum} do documento ${docIndex + 1}`;
-                        progressPercent.textContent = `${pageProgress}%`;
-                        
-                        // Permitir que a UI atualize
-                        await new Promise(resolve => setTimeout(resolve, 10));
-                        
-                        try {
-                            // Criar PDF de página única
-                            const newPdfDoc = await PDFDocument.create();
-                            const [copiedPage] = await newPdfDoc.copyPages(originalPdfDoc, [pageNum - 1]);
-                            newPdfDoc.addPage(copiedPage);
-                            
-                            // Salvar o novo PDF
-                            const pagePdfBytes = await newPdfDoc.save();
-                            
-                            // Gerar nome do arquivo
-                            const pageInDoc = pageNum - startPage + 1;
-                            const fileName = generateFileName(docName, pageInDoc);
-                            
-                            // Adicionar ao ZIP
-                            zip.file(`${fileName}.pdf`, pagePdfBytes);
-                            
-                            // Armazenar o blob para download individual
-                            const pdfBlob = new Blob([pagePdfBytes], { type: 'application/pdf' });
-                            pdfBlobs[`${fileName}.pdf`] = pdfBlob;
-                            
-                            processedFiles.push({
-                                docIndex: docIndex + 1,
-                                pageNum,
-                                pageInDoc,
-                                fileName,
-                                docName
-                            });
-                        } catch (error) {
-                            console.error(`Erro ao processar página ${pageNum}:`, error);
-                            throw new Error(`Erro ao processar página ${pageNum}: ${error.message}`);
-                        }
-                    }
-                }
-                
-                // Finalizar progresso
-                progressFill.style.width = '100%';
-                progressText.textContent = 'Processamento concluído!';
-                progressPercent.textContent = '100%';
-                
-                // Mostrar resultados
-                displayResults();
-                
-                // Avançar para a etapa de download
-                setTimeout(() => {
-                    step4.classList.add('hidden');
-                    step5.classList.remove('hidden');
-                }, 500);
-            } catch (error) {
-                console.error('Erro ao processar PDF:', error);
-                processingSuccess.classList.add('hidden');
-                processingError.classList.remove('hidden');
-                processingError.style.display = 'block';
-                processingError.textContent = `Erro: ${error.message}`;
-                
-                // Avançar para a etapa de download mesmo com erro
-                setTimeout(() => {
-                    step4.classList.add('hidden');
-                    step5.classList.remove('hidden');
-                }, 500);
-            }
-        }
-
-        // Função para gerar nome de arquivo
-        function generateFileName(docName, pageInDoc) {
-            let pattern = filenamePattern.value || '{text}_pagina{page}';
-            
-            // Substituir placeholders
-            let fileName = pattern
-                .replace('{text}', docName)
-                .replace('{page}', pageInDoc);
-            
-            return fileName;
-        }
-
-        // Função para limpar nome de arquivo
-        function sanitizeFilename(name) {
-            // Remover caracteres inválidos para nome de arquivo
-            return name.replace(/[<>:"/\\|?*]/g, '_')
-                      .replace(/\s+/g, '_')
-                      .substring(0, 100); // Limitar tamanho
-        }
-
-        // Função para exibir resultados
-        function displayResults() {
-            resultFiles.innerHTML = '';
-            
-            // Agrupar arquivos por documento
-            const docGroups = {};
-            
-            processedFiles.forEach(file => {
-                if (!docGroups[file.docIndex]) {
-                    docGroups[file.docIndex] = [];
-                }
-                docGroups[file.docIndex].push(file);
-            });
-            
-            // Exibir arquivos agrupados por documento
-            Object.keys(docGroups).forEach(docIndex => {
-                const files = docGroups[docIndex];
-                const docName = files[0].docName;
-                
-                // Criar cabeçalho do documento
-                const docHeader = document.createElement('div');
-                docHeader.className = 'alert alert-info';
-                docHeader.style.marginTop = '1rem';
-                docHeader.style.marginBottom = '0.5rem';
-                docHeader.textContent = `Documento ${docIndex}: ${docName}`;
-                resultFiles.appendChild(docHeader);
-                
-                // Listar arquivos do documento
-                files.forEach(file => {
-                    const fileElement = document.createElement('div');
-                    fileElement.className = 'result-file';
-                    
-                    // Adicionar link de download individual
-                    const downloadLink = document.createElement('a');
-                    downloadLink.className = 'download-individual';
-                    downloadLink.textContent = 'Baixar';
-                    downloadLink.href = '#';
-                    downloadLink.addEventListener('click', (e) => {
-                        e.preventDefault();
-                        downloadSingleFile(`${file.fileName}.pdf`);
-                    });
-                    
-                    fileElement.innerHTML = `
-                        <span class="result-file-name">${file.fileName}.pdf</span>
-                        <span class="result-file-pages">Página ${file.pageInDoc} de ${files.length}</span>
-                    `;
-                    
-                    fileElement.appendChild(downloadLink);
-                    resultFiles.appendChild(fileElement);
-                });
-            });
-        }
-
-        // Função para baixar um único arquivo
-        function downloadSingleFile(fileName) {
-            try {
-                console.log(`Iniciando download do arquivo: ${fileName}`);
-                if (pdfBlobs[fileName]) {
-                    saveAs(pdfBlobs[fileName], fileName);
-                } else {
-                    console.error(`Arquivo não encontrado: ${fileName}`);
-                    alert(`Erro: Arquivo ${fileName} não encontrado.`);
-                }
-            } catch (error) {
-                console.error('Erro ao baixar arquivo individual:', error);
-                alert('Erro ao baixar o arquivo. Por favor, tente novamente.');
-            }
-        }
-
-        // Função para baixar o ZIP
-        async function downloadZip() {
-            try {
-                console.log('Iniciando geração do arquivo ZIP...');
-                
-                // Verificar se há arquivos para baixar
-                if (processedFiles.length === 0) {
-                    alert('Não há arquivos para baixar.');
-                    return;
-                }
-                
-                // Gerar o arquivo ZIP
-                const zipBlob = await zip.generateAsync({
-                    type: 'blob',
-                    compression: 'DEFLATE',
-                    compressionOptions: { level: 6 }
-                });
-                
-                console.log('Arquivo ZIP gerado com sucesso. Tamanho:', formatFileSize(zipBlob.size));
-                
-                // Obter nome do arquivo original
-                const originalFileName = pdfFileInput.files[0].name.replace('.pdf', '');
-                
-                // Baixar o arquivo ZIP usando FileSaver
-                console.log('Iniciando download do ZIP...');
-                saveAs(zipBlob, `${originalFileName}_renomeado.zip`);
-                console.log('Download iniciado com sucesso!');
-            } catch (error) {
-                console.error('Erro ao gerar ou baixar arquivo ZIP:', error);
-                alert('Erro ao gerar arquivo ZIP. Por favor, tente novamente.');
-            }
-        }
-
-        // Função para formatar o tamanho do arquivo
-        function formatFileSize(bytes) {
-            if (bytes === 0) return '0 Bytes';
-            
-            const k = 1024;
-            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-            const i = Math.floor(Math.log(bytes) / Math.log(k));
-            
-            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-        }
-
-        // Função para resetar o aplicativo
-        function resetApp() {
-            // Resetar variáveis
-            pdfDoc = null;
-            pdfBytes = null;
-            pdfArrayBuffer = null;
-            currentPage = 1;
-            totalPages = 0;
-            scale = 1.5;
-            selectionCoordinates = null;
-            processedFiles = [];
-            pdfBlobs = {};
-            zip = new JSZip();
-            
-            // Resetar interface
-            pdfFileInput.value = '';
-            fileInfo.classList.remove('active');
-            fileInfo.style.display = 'none';
-            fileName.textContent = '-';
-            fileSize.textContent = '-';
-            filePages.textContent = '-';
-            continueToStep2.disabled = true;
-            
-            // Resetar campos
-            pagesPerDocumentInput.value = '1';
-            textPageNumberInput.value = '1';
-            filenamePattern.value = '{text}_pagina{page}';
-            
-            // Limpar canvas
-            const ctx = pdfCanvas.getContext('2d');
-            ctx.clearRect(0, 0, pdfCanvas.width, pdfCanvas.height);
-            
-            // Resetar seleção
-            clearSelection();
-            
-            // Resetar progresso
-            progressFill.style.width = '0%';
-            progressText.textContent = 'Preparando...';
-            progressPercent.textContent = '0%';
-            
-            // Resetar resultados
-            processingSuccess.classList.remove('hidden');
-            processingSuccess.style.display = 'block';
-            processingError.classList.add('hidden');
-            processingError.style.display = 'none';
-            resultFiles.innerHTML = '';
-        }
-    </script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9516a45434d9f171',t:'MTc1MDIwNjI0Ny4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>

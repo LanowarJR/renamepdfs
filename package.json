@@ -1,0 +1,31 @@
+{
+  "name": "renamepdfs",
+  "version": "1.0.0",
+  "description": "Renomeia arquivos pdfs escolhendo o campo no conteudo do arquivo. como ex: Nomes, etc",
+  "main": "index.js",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/LanowarJR/renamepdfs.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "bugs": {
+    "url": "https://github.com/LanowarJR/renamepdfs/issues"
+  },
+  "homepage": "https://github.com/LanowarJR/renamepdfs#readme",
+  "dependencies": {
+    "file-saver": "^2.0.5",
+    "jszip": "^3.10.1",
+    "pdf-lib": "^1.17.1",
+    "pdfjs-dist": "^5.4.449",
+    "vite": "^7.2.6",
+    "xlsx": "^0.18.5"
+  }
+}

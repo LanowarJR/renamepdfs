@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Renomeador de PDF Pro</title>
+  <script type="module" crossorigin src="/assets/index-DVaFUX1V.js"></script>
+  <link rel="stylesheet" crossorigin href="/assets/index-0WMZ8kUC.css">
+</head>
+
+<body>
+    <div class="app-container">
+        <header class="header">
+            <h1 class="brand">PDF Renamer Pro</h1>
+            <p class="subtitle">Separe, renomeie e organize seus documentos com inteligência.</p>
+        </header>
+
+        <div class="card-stack">
+            <!-- Etapa 1: Upload -->
+            <div id="step1" class="step-card">
+                <div class="step-header">
+                    <div class="step-title">
+                        <span class="step-number">1</span>
+                        Upload do Arquivo
+                    </div>
+                </div>
+
+                <div class="upload-area" id="fileUpload">
+                    <span class="upload-icon">📄</span>
+                    <h3 class="upload-title">Selecione seu PDF</h3>
+                    <p class="upload-hint">Arraste e solte ou clique para buscar</p>
+                    <button id="uploadButton" class="btn btn-primary">Buscar Arquivo</button>
+                    <input type="file" id="pdfFile" accept=".pdf" style="display: none;">
+                </div>
+
+                <div id="fileInfo" class="hidden">
+                    <div class="file-meta-box">
+                        <div class="meta-item">
+                            <span class="meta-label">Arquivo</span>
+                            <span class="meta-value" id="fileName">-</span>
+                        </div>
+                        <div class="meta-item">
+                            <span class="meta-label">Tamanho</span>
+                            <span class="meta-value" id="fileSize">-</span>
+                        </div>
+                        <div class="meta-item">
+                            <span class="meta-label">Páginas</span>
+                            <span class="meta-value" id="filePages">-</span>
+                        </div>
+                    </div>
+                    <div style="margin-top: 1.5rem; text-align: right;">
+                        <button id="continueToStep2" class="btn btn-primary" disabled>
+                            Continuar configuração →
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Etapa 2: Configuração -->
+            <div id="step2" class="step-card hidden">
+                <div class="step-header">
+                    <div class="step-title">
+                        <span class="step-number">2</span>
+                        Configuração de Extração
+                    </div>
+                </div>
+
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label class="label">Páginas por documento</label>
+                        <input type="number" id="pagesPerDocument" class="input" value="1" min="1">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="label">Página do texto alvo</label>
+                        <input type="number" id="textPageNumber" class="input" value="1" min="1">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="label">Modo de Extração</label>
+                        <select id="extractionMode" class="input">
+                            <option value="area">🎨 Seleção Visual (Desenhar área)</option>
+                            <option value="cpf">🆔 CPF Automático</option>
+                            <option value="email">📧 E-mail Automático</option>
+                            <option value="regex">🔣 Regex Personalizado</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div id="regexContainer" class="form-group hidden">
+                    <label class="label">Padrão Regex (Ex: \d{4})</label>
+                    <input type="text" id="customRegex" class="input" placeholder="Digite sua expressão regular...">
+                </div>
+
+                <div class="form-group">
+                    <label class="label">Personalizar Nomenclatura</label>
+                    <div style="display: flex; gap: 10px; margin-bottom: 0.5rem;">
+                        <input type="text" id="filenamePrefix" class="input" placeholder="Prefixo (Ex: REL_)"
+                            style="flex: 1;">
+                        <input type="text" id="filenameSuffix" class="input" placeholder="Sufixo (Ex: _2024)"
+                            style="flex: 1;">
+                    </div>
+                    <label class="label">Padrão do Arquivo</label>
+                    <input type="text" id="filenamePattern" class="input" value="{text}_{page}"
+                        placeholder="{text}_{page}">
+                    <p class="small-text" style="margin-top: 0.25rem;">Tags: {text} = extraído, {page} = índice,
+                        {lookup} = valor da planilha</p>
+                </div>
+
+                <div class="form-group"
+                    style="padding: 1.5rem; background: #eef2ff; border-radius: 8px; border: 1px dashed var(--primary);">
+                    <label class="label" style="color: var(--primary);">📊 Enriquecer com Planilha (Opcional)</label>
+                    <p class="small-text" style="margin-bottom: 1rem;">Cruze o nome extraído com dados de uma planilha
+                        (Excel/CSV).</p>
+
+                    <input type="file" id="spreadsheetFile" accept=".xlsx, .xls, .csv" class="input"
+                        style="margin-bottom: 1rem;">
+
+                    <div id="spreadsheetConfig" class="hidden">
+                        <div class="form-grid">
+                            <div>
+                                <label class="label">Coluna de Busca (Nome no PDF)</label>
+                                <select id="searchColumn" class="input">
+                                    <option value="">Carregue uma planilha...</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="label">Coluna de Adição (Ex: CPF)</label>
+                                <select id="valueColumn" class="input">
+                                    <option value="">Carregue uma planilha...</option>
+                                </select>
+                            </div>
+                        </div>
+                        <p class="small-text" style="margin-top: 0.5rem;">O app irá procurar o texto extraído na
+                            <b>Coluna de Busca</b> e adicionar o valor da <b>Coluna de Adição</b> ao nome.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="label">Nome Padrão (Fallback)</label>
+                    <input type="text" id="defaultFilename" class="input" value="documento">
+                </div>
+
+                <div style="display: flex; justify-content: space-between; margin-top: 2rem;">
+                    <button id="backToStep1" class="btn btn-secondary">← Voltar</button>
+                    <button id="continueToStep3" class="btn btn-primary">Avançar →</button>
+                </div>
+            </div>
+
+            <!-- Etapa 3: Seleção Visual -->
+            <div id="step3" class="step-card hidden">
+                <div class="step-header">
+                    <div class="step-title">
+                        <span class="step-number">3</span>
+                        Seleção de Área
+                    </div>
+                </div>
+
+                <div class="status-badge status-info" style="background: #e0f2fe; color: #0369a1; margin-bottom: 1rem;">
+                    ℹ️ Desenhe um retângulo sobre o texto que deseja usar como nome.
+                </div>
+
+                <div class="pdf-container">
+                    <div class="pdf-toolbar">
+                        <div>
+                            <span id="pageInfo">Carregando...</span>
+                        </div>
+                        <div style="display: flex; gap: 0.5rem;">
+                            <button id="prevPage" class="pdf-btn-icon">◀</button>
+                            <button id="nextPage" class="pdf-btn-icon">▶</button>
+                            <div style="width: 1rem;"></div>
+                            <button id="zoomOut" class="pdf-btn-icon">－</button>
+                            <button id="zoomIn" class="pdf-btn-icon">＋</button>
+                        </div>
+                    </div>
+                    <div class="canvas-wrapper" id="pdfCanvasContainer">
+                        <div style="position: relative;">
+                            <canvas id="pdfCanvas"></canvas>
+                            <div id="selectionOverlay" class="selection-overlay hidden"></div>
+                            <div id="selectionHighlight"
+                                style="position: absolute; top:0; left:0; pointer-events:none;"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="extractedTextContainer" class="hidden" style="margin-bottom: 1.5rem;">
+                    <label class="label">Texto Detectado:</label>
+                    <div id="extractedText"
+                        style="background: #f1f5f9; padding: 1rem; border-radius: 8px; font-family: monospace;"></div>
+                </div>
+
+                <div style="display: flex; justify-content: space-between;">
+                    <button id="backToStep2" class="btn btn-secondary">← Configuração</button>
+                    <div>
+                        <button id="resetSelection" class="btn btn-secondary" style="margin-right: 0.5rem;">Limpar
+                            Seleção</button>
+                        <button id="continueToStep4" class="btn btn-primary" disabled>Processar PDF →</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Etapa 4: Processamento -->
+            <div id="step4" class="step-card hidden">
+                <div class="step-header">
+                    <div class="step-title">
+                        <span class="step-number">4</span>
+                        Processando...
+                    </div>
+                </div>
+
+                <div style="text-align: center; padding: 2rem;">
+                    <div class="progress-track">
+                        <div id="progressFill" class="progress-bar"></div>
+                    </div>
+                    <p id="progressText" style="font-weight: 500;">Iniciando...</p>
+                    <p id="progressPercent" class="small-text">0%</p>
+                </div>
+
+                <div id="processingError" class="status-badge status-error hidden"></div>
+                <div id="processingSuccess" class="hidden"></div> <!-- Placeholder -->
+            </div>
+
+            <!-- Etapa 5: Finalização -->
+            <div id="step5" class="step-card hidden">
+                <div class="step-header">
+                    <div class="step-title">
+                        <span class="step-number">5</span>
+                        Concluído!
+                    </div>
+                    <button id="startOver" class="btn btn-secondary">Novo Processo</button>
+                </div>
+
+                <div style="text-align: center; margin-bottom: 2rem;">
+                    <div style="font-size: 3rem; margin-bottom: 0.5rem;">🎉</div>
+                    <h3>Tudo pronto!</h3>
+                    <p class="small-text">Seus arquivos foram gerados com sucesso.</p>
+                    <div style="margin-top: 1.5rem;">
+                        <button id="downloadZip" class="btn btn-success" style="font-size: 1.1rem; padding: 1rem 2rem;">
+                            📥 Baixar Todos (ZIP)
+                        </button>
+                    </div>
+                </div>
+
+                <div id="resultFiles" class="file-list"></div>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>
